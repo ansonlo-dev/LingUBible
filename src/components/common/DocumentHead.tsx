@@ -1,13 +1,13 @@
 import { useEffect, useRef, useMemo } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useLocation } from 'react-router-dom';
-import { 
-  getPageSEO, 
-  generateHreflangUrls, 
-  getLocaleCode, 
+import {
+  getPageSEO,
+  getLocaleCode,
   generateStructuredData,
   getPageTypeFromPath,
-  SEOData 
+  isNoIndexPath,
+  SEOData
 } from '@/utils/seo/helpers';
 import { SEO_CONFIG, SupportedLanguage } from '@/utils/seo/config';
 
@@ -18,10 +18,25 @@ interface DocumentHeadProps {
   ogImage?: string;
 }
 
+// App.tsx 會全域掛一個沒有 props 的 DocumentHead，而課程／講師頁另外掛一個帶
+// 專屬標題的。若兩者都寫入 head，全域那個會把專屬標題蓋成通用網站標題，
+// Google 就會再次看到上千頁相同的 <title>。因此頁面級的實例掛載時「認領」head，
+// 全域實例在有人認領時直接跳過。
+let pageLevelHeadClaims = 0;
+
 export function DocumentHead({ title, description, keywords, ogImage }: DocumentHeadProps) {
   const { language } = useLanguage();
   const location = useLocation();
   const lastUpdateRef = useRef<string>('');
+  const isPageLevel = Boolean(title || description || keywords || ogImage);
+
+  useEffect(() => {
+    if (!isPageLevel) return;
+    pageLevelHeadClaims += 1;
+    return () => {
+      pageLevelHeadClaims -= 1;
+    };
+  }, [isPageLevel]);
 
   // 記憶化計算，只在依賴項真正改變時重新計算
   const memoizedData = useMemo(() => {
@@ -33,7 +48,6 @@ export function DocumentHead({ title, description, keywords, ogImage }: Document
       keywords,
       ogImage
     });
-    const alternateUrls = generateHreflangUrls(location.pathname);
     const structuredData = generateStructuredData(
       pageType,
       language as SupportedLanguage,
@@ -44,13 +58,18 @@ export function DocumentHead({ title, description, keywords, ogImage }: Document
       canonicalUrl,
       pageType,
       seoData,
-      alternateUrls,
       structuredData,
+      noIndex: isNoIndexPath(location.pathname),
       localeCode: getLocaleCode(language as SupportedLanguage)
     };
   }, [language, location.pathname, title, description, keywords, ogImage]);
 
   useEffect(() => {
+    // 頁面級實例已接手時，全域實例不要覆寫
+    if (!isPageLevel && pageLevelHeadClaims > 0) {
+      return;
+    }
+
     // 創建一個唯一標識符來檢查是否需要更新
     const updateKey = JSON.stringify({
       path: location.pathname,
@@ -68,7 +87,7 @@ export function DocumentHead({ title, description, keywords, ogImage }: Document
 
     lastUpdateRef.current = updateKey;
 
-    const { canonicalUrl, seoData, alternateUrls, structuredData, localeCode } = memoizedData;
+    const { canonicalUrl, seoData, structuredData, localeCode, noIndex } = memoizedData;
 
     // 設置頁面標題（只在真正改變時）
     if (document.title !== seoData.title) {
@@ -137,40 +156,22 @@ export function DocumentHead({ title, description, keywords, ogImage }: Document
       document.head.appendChild(canonicalLink);
     }
 
-    // 更新 hreflang 標籤（只在路徑改變時）
-    const existingHreflangs = document.querySelectorAll('link[rel="alternate"][hreflang]');
-    const expectedHreflangs = Object.entries(alternateUrls).length + 1; // +1 for x-default
+    // 每頁只有一個正規網址（語言由 cookie / ?lang= 切換，不另開 URL），
+    // 因此不輸出 hreflang；殘留的舊標籤要移除，避免 Google 去索引 ?lang= 重複頁。
+    document.querySelectorAll('link[rel="alternate"][hreflang]').forEach(link => link.remove());
 
-    // 只有在數量不匹配或路徑改變時才重新創建 hreflang 標籤
-    if (existingHreflangs.length !== expectedHreflangs) {
-      // 移除舊的 hreflang 標籤
-      existingHreflangs.forEach(link => link.remove());
-
-      // 添加新的 hreflang 標籤
-      Object.entries(alternateUrls).forEach(([lang, url]) => {
-        const hreflangLink = document.createElement('link');
-        hreflangLink.setAttribute('rel', 'alternate');
-        hreflangLink.setAttribute('hreflang', lang);
-        hreflangLink.setAttribute('href', url);
-        document.head.appendChild(hreflangLink);
-      });
-
-      // 添加 x-default hreflang
-      const defaultHreflang = document.createElement('link');
-      defaultHreflang.setAttribute('rel', 'alternate');
-      defaultHreflang.setAttribute('hreflang', 'x-default');
-      defaultHreflang.setAttribute('href', alternateUrls.en);
-      document.head.appendChild(defaultHreflang);
-    }
+    // 私人／功能性頁面不應進入索引
+    updateMetaTag('meta[name="robots"]', noIndex ? 'noindex, follow' : 'index, follow');
 
     // 設置 PWA 應用標題
     updateMetaTag('meta[name="apple-mobile-web-app-title"]', SEO_CONFIG.SITE_NAME);
 
     // 更新結構化數據（只在內容改變時）
     const updateStructuredData = () => {
-      const existingScript = document.querySelector('script[type="application/ld+json"]');
+      // 只更新自己建立的那一個，不能碰預渲染輸出的 Course / Person / BreadcrumbList
+      const existingScript = document.getElementById('seo-structured-data');
       const newContent = JSON.stringify(structuredData);
-      
+
       if (existingScript) {
         // 只在內容真正改變時才更新
         if (existingScript.textContent !== newContent) {
@@ -178,6 +179,7 @@ export function DocumentHead({ title, description, keywords, ogImage }: Document
         }
       } else {
         const script = document.createElement('script');
+        script.id = 'seo-structured-data';
         script.type = 'application/ld+json';
         script.textContent = newContent;
         document.head.appendChild(script);

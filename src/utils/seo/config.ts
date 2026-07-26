@@ -1,10 +1,10 @@
 export const SEO_CONFIG = {
   // 基本網站信息
   SITE_NAME: 'LingUBible',
-  BASE_URL: 'https://lingubible.com',
+  BASE_URL: 'https://www.lingubible.com',
   
   // 默認 meta 圖片
-  DEFAULT_OG_IMAGE: 'https://lingubible.com/meta-image.png',
+  DEFAULT_OG_IMAGE: 'https://www.lingubible.com/meta-image.png',
   
   // 支持的語言
   SUPPORTED_LANGUAGES: ['en', 'zh-TW', 'zh-CN'] as const,

@@ -1,32 +1,28 @@
+# LingUBible — https://www.lingubible.com
+
 User-agent: *
 Allow: /
 
-# 允許搜尋引擎訪問所有語言版本
-Allow: /?lang=en
-Allow: /?lang=zh-TW
-Allow: /?lang=zh-CN
+# 私人頁面與流程頁不需要索引（同時由頁面上的 noindex 標記把關）
+Disallow: /settings
+Disallow: /my-reviews
+Disallow: /favorites
+Disallow: /write-review
+Disallow: /oauth/
+Disallow: /reset-password
+Disallow: /forgot-password
+Disallow: /email-preview
+Disallow: /performance
 
-# 允許訪問主要頁面
-Allow: /courses
-Allow: /instructors
-Allow: /login
-Allow: /register
-Allow: /privacy
-Allow: /terms
-
-# 禁止訪問開發和測試文件
+# 開發與測試檔案
 Disallow: /test-seo.html
+Disallow: /debug-session.html
+Disallow: /google-indexing-request.html
 Disallow: /dev/
-Disallow: /_next/
-Disallow: /api/
 Disallow: /admin/
 
-# 禁止訪問需要登入的頁面
-Disallow: /write-review
-Disallow: /settings
+# 注意：?lang= 這類重複網址刻意「不」封鎖，
+# 讓 Google 讀得到頁面上的 canonical 才能正確合併，
+# 若用 robots.txt 擋掉反而可能出現「已建立索引，但遭 robots.txt 封鎖」。
 
-# 網站地圖位置
-Sitemap: https://lingubible.com/sitemap.xml
-
-# 爬蟲延遲（可選）
-Crawl-delay: 1
+Sitemap: https://www.lingubible.com/sitemap.xml

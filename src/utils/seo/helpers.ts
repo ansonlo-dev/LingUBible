@@ -33,16 +33,22 @@ export function getPageSEO(
 }
 
 /**
- * 生成 hreflang URLs
+ * 不應被搜尋引擎索引的路徑（私人頁面、驗證流程、開發工具）
  */
-export function generateHreflangUrls(pathname: string): Record<string, string> {
-  const urls: Record<string, string> = {};
-  
-  SEO_CONFIG.SUPPORTED_LANGUAGES.forEach(lang => {
-    urls[lang] = `${SEO_CONFIG.BASE_URL}${pathname}?lang=${lang}`;
-  });
-  
-  return urls;
+const NO_INDEX_PREFIXES = [
+  '/settings',
+  '/my-reviews',
+  '/favorites',
+  '/write-review',
+  '/oauth',
+  '/reset-password',
+  '/forgot-password',
+  '/email-preview',
+  '/performance'
+];
+
+export function isNoIndexPath(pathname: string): boolean {
+  return NO_INDEX_PREFIXES.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
 /**

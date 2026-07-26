@@ -10,7 +10,8 @@
   "scripts": {
     "dev": "vite --host",
     "dev:performance": "vite --mode development --open /performance",
-    "build": "cp public/index.html index.html && SKIP_FONT_PROCESSING=true NODE_OPTIONS='--max-old-space-size=4096' vite build --mode production && rm -f dist/public/index.html && echo '✓ 清理重複的 index.html'",
+    "build": "cp public/index.html index.html && SKIP_FONT_PROCESSING=true NODE_OPTIONS='--max-old-space-size=4096' vite build --mode production && rm -f dist/public/index.html && echo '✓ 清理重複的 index.html' && bun run seo:generate",
+    "seo:generate": "node scripts/generate-seo.mjs dist",
     "build:dev": "vite build --mode development",
     "build:prod": "NODE_ENV=production bun run prebuild && vite build",
     "build:fast": "SKIP_FONT_PROCESSING=true vite build --mode production",

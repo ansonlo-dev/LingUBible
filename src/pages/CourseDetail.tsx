@@ -47,6 +47,7 @@ import { Query } from 'appwrite';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCourseDetailOptimized } from '@/hooks/useCourseDetailOptimized';
+import { DocumentHead } from '@/components/common/DocumentHead';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo, type Instructor } from '@/services/api/courseService';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
@@ -1931,8 +1932,25 @@ const CourseDetail = () => {
     );
   }
 
+  // 讓渲染後的 DOM 保有與預渲染 HTML 一致的唯一標題／描述，
+  // 否則 DocumentHead 會把每頁標題蓋回通用的網站標題，Google 會判為重複頁。
+  const seoChineseTitle = language === 'zh-CN' ? course.course_title_sc : course.course_title_tc;
+  const seoReviewCount = courseStats?.reviewCount ?? 0;
+  const seoRating = courseStats?.averageRating > 0 ? courseStats.averageRating.toFixed(1) : null;
+
   return (
     <div className="mx-auto px-4 lg:px-8 xl:px-16 py-6 pb-20 overflow-hidden min-w-0">
+      <DocumentHead
+        title={`${course.course_code} ${course.course_title}${seoChineseTitle ? `（${seoChineseTitle}）` : ''}｜嶺南大學課程評價 - LingUBible`}
+        description={`${course.course_code} ${course.course_title}${seoChineseTitle ? `（${seoChineseTitle}）` : ''} — 嶺南大學${course.department ? ` ${course.department} ` : ''}課程評價。${
+          seoReviewCount > 0
+            ? `目前有 ${seoReviewCount} 則學生評價${seoRating ? `，平均評分 ${seoRating}/5` : ''}。`
+            : '目前尚未有學生評價。'
+        }查看課程難度、實用程度、工作量、成績分佈與任教講師評分。`}
+        keywords={[course.course_code, course.course_title, course.course_title_tc, course.course_title_sc, course.department, '嶺南大學課程評價', 'Lingnan course review']
+          .filter(Boolean)
+          .join(',')}
+      />
       {/* Course Header - Always visible above tabs */}
       <div className="mb-6">
         <Card className="transparent-info-card">

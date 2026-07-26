@@ -1,6 +1,7 @@
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { DocumentHead } from '@/components/common/DocumentHead';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Users, 
@@ -1633,8 +1634,30 @@ const Lecturers = () => {
     );
   }
 
+  // 讓渲染後的 DOM 保有與預渲染 HTML 一致的唯一標題／描述（見 CourseDetail 同段註解）
+  const seoInstructorChineseName = instructor
+    ? language === 'zh-CN'
+      ? instructor.name_sc
+      : instructor.name_tc
+    : '';
+  const seoTeachingScore =
+    detailedStats.averageTeachingQuality > 0 ? detailedStats.averageTeachingQuality.toFixed(1) : null;
+
   return (
     <div className="mx-auto px-4 lg:px-8 xl:px-16 py-6 pb-20 overflow-hidden min-w-0">
+      {instructor && (
+        <DocumentHead
+          title={`${instructor.name}${seoInstructorChineseName ? `（${seoInstructorChineseName}）` : ''}｜嶺南大學講師評價與教學評分 - LingUBible`}
+          description={`${instructor.title ? `${instructor.title} ` : ''}${instructor.name}${seoInstructorChineseName ? `（${seoInstructorChineseName}）` : ''} — 嶺南大學${instructor.department ? ` ${instructor.department} ` : ''}講師評價。${
+            reviews.length > 0
+              ? `目前有 ${reviews.length} 則學生評價${seoTeachingScore ? `，教學評分 ${seoTeachingScore}/5` : ''}。`
+              : '目前尚未有學生評價。'
+          }查看任教課程、教學評分與學生評論。`}
+          keywords={[instructor.name, instructor.name_tc, instructor.name_sc, instructor.department, '嶺南大學講師評價', 'Lingnan lecturer review']
+            .filter(Boolean)
+            .join(',')}
+        />
+      )}
       {/* Instructor Header - Always visible above tabs */}
       <div className="mb-6">
         {instructor && (
