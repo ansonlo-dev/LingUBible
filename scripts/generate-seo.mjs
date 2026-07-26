@@ -26,11 +26,15 @@ const ENDPOINT = (process.env.VITE_APPWRITE_ENDPOINT || 'https://appwrite.lingub
 const PROJECT_ID = process.env.VITE_APPWRITE_PROJECT_ID || '6a1097400037a55f6472';
 const DATABASE_ID = 'lingubible';
 const EMIT_FLAT_HTML = process.env.SEO_EMIT_FLAT_HTML === '1';
-// Appwrite Sites 的邊緣派送在 2098 個檔案時連續失敗（Edge distribution failed 0/6），
-// 240 個檔案時正常。因此預設只預渲染「有評價」的課程與講師頁，把檔案數壓在千位以下；
-// 其餘頁面仍會列在 sitemap，靠 Google 執行 JS 取得內容。
-// 可用 SEO_PRERENDER_SCOPE=all（全部）或 none（只出 sitemap）覆寫。
-const PRERENDER_SCOPE = process.env.SEO_PRERENDER_SCOPE || 'reviewed';
+// Appwrite Sites 的邊緣派送撐不住大量檔案，實測（2026-07-26）：
+//   240 檔 → 6/6 成功；921 檔 → 4/6、重試 3/6；2098 檔 → 0/6
+// 派送失敗的節點會繼續供應上一個成功的部署，而新加坡節點（服務香港流量）
+// 每次都在失敗那一邊，等於整份修正對本地使用者完全沒生效。
+// 因此預設不預渲染詳細頁，只出 12 個靜態頁 + sitemap，把檔案數壓回 ~256。
+// 課程／講師頁仍全部列在 sitemap，並由 client-side 的 DocumentHead 補上
+// 各自的 title / description / canonical，靠 Google 執行 JS 取得。
+// 之後若 Appwrite 修好派送，改 SEO_PRERENDER_SCOPE=reviewed 或 all 即可恢復。
+const PRERENDER_SCOPE = process.env.SEO_PRERENDER_SCOPE || 'none';
 const OG_IMAGE = `${SITE_URL}/meta-image.png`;
 const TODAY = new Date().toISOString().slice(0, 10);
 
