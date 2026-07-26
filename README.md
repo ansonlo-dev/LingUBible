@@ -509,7 +509,7 @@ copies or substantial portions of the Software.
 **🔗 Related Links**
 
 [🌐 Official Website](https://lingubible.com) • 
-[📧 Contact Us](mailto:contact@ansonlo.dev) • 
+[📧 Contact Us](mailto:hi@ansonlo.dev) • 
 [💬 Discussions](https://github.com/ansonlo-dev/LingUBible/discussions) • 
 [🐛 Issue Reports](https://github.com/ansonlo-dev/LingUBible/issues)
 

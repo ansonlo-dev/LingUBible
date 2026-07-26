@@ -500,7 +500,7 @@ copies or substantial portions of the Software.
 **🔗 相關連結**
 
 [🌐 官方網站](https://lingubible.com) • 
-[📧 聯絡我們](mailto:contact@ansonlo.dev) • 
+[📧 聯絡我們](mailto:hi@ansonlo.dev) • 
 [💬 討論區](https://github.com/ansonlo-dev/LingUBible/discussions) • 
 [🐛 問題回報](https://github.com/ansonlo-dev/LingUBible/issues)
 
