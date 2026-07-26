@@ -15,7 +15,7 @@
 [![Appwrite](https://img.shields.io/badge/Appwrite-19.0.0-FD366E?style=flat-square&logo=appwrite&logoColor=white)](https://appwrite.io/)
 [![ECharts](https://img.shields.io/badge/ECharts-5.6.0-AA344D?style=flat-square&logo=apacheecharts&logoColor=white)](https://echarts.apache.org/)
 
-[![Deployed to Appwrite Sites](https://img.shields.io/badge/Deployed%20to-Appwrite%20Sites-FD366E?style=flat-square&logo=appwrite&logoColor=white)](https://lingubible.com)
+[![Deployed to Appwrite Sites](https://img.shields.io/badge/Deployed%20to-Appwrite%20Sites-FD366E?style=flat-square&logo=appwrite&logoColor=white)](https://www.lingubible.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=flat-square)](https://github.com/ansonlo-dev/LingUBible/graphs/commit-activity)
@@ -40,7 +40,7 @@
 
 **LingUBible is live and serving Lingnan University students at:**
 
-### [🔗 lingubible.com](https://lingubible.com)
+### [🔗 lingubible.com](https://www.lingubible.com)
 
 *Browse courses and lecturers, read and write reviews, and explore interactive grade distributions — no installation required. Sign-up requires a valid Lingnan University email.*
 
@@ -508,7 +508,7 @@ copies or substantial portions of the Software.
 
 **🔗 Related Links**
 
-[🌐 Official Website](https://lingubible.com) • 
+[🌐 Official Website](https://www.lingubible.com) • 
 [📧 Contact Us](mailto:hi@ansonlo.dev) • 
 [💬 Discussions](https://github.com/ansonlo-dev/LingUBible/discussions) • 
 [🐛 Issue Reports](https://github.com/ansonlo-dev/LingUBible/issues)

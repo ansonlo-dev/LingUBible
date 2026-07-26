@@ -2,15 +2,15 @@
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "LingUBible",
-  "url": "https://lingubible.com/",
+  "url": "https://www.lingubible.com/",
   "logo": {
     "@type": "ImageObject",
-    "url": "https://lingubible.com/favicon-google.png",
+    "url": "https://www.lingubible.com/favicon-google.png",
     "width": 96,
     "height": 96
   },
   "sameAs": [
-    "https://lingubible.com/"
+    "https://www.lingubible.com/"
   ],
   "description": "嶺南大學課程與講師評價平台 - Lingnan University Course Review Platform",
   "brand": {
@@ -21,7 +21,7 @@
   },
   "owns": {
     "@type": "WebSite",
-    "url": "https://lingubible.com/",
+    "url": "https://www.lingubible.com/",
     "name": "LingUBible"
   }
 } 

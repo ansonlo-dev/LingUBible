@@ -188,8 +188,8 @@ export function generateEmailTemplate(code, language = 'zh-TW', theme = 'light')
 <body>
     <div class="container">
         <div class="header">
-            <a href="https://lingubible.com" style="text-decoration: none; color: inherit;">
-                <img src="https://lingubible.com/email-banner.png" alt="LingUBible" class="logo-image" />
+            <a href="https://www.lingubible.com" style="text-decoration: none; color: inherit;">
+                <img src="https://www.lingubible.com/email-banner.png" alt="LingUBible" class="logo-image" />
                 <div class="logo">${t.title}</div>
                 <div class="subtitle">${t.subtitle}</div>
             </a>
@@ -213,10 +213,10 @@ export function generateEmailTemplate(code, language = 'zh-TW', theme = 'light')
         <div class="footer">
             ${t.footer}
             <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid ${colors.border};">
-                <a href="https://lingubible.com/faq" style="color: ${colors.linkColor}; text-decoration: none; margin: 0 10px;">${t.footerLinks.faq}</a> |
-                <a href="https://lingubible.com/contact" style="color: ${colors.linkColor}; text-decoration: none; margin: 0 10px;">${t.footerLinks.contact}</a> |
-                <a href="https://lingubible.com/terms" style="color: ${colors.linkColor}; text-decoration: none; margin: 0 10px;">${t.footerLinks.terms}</a> |
-                <a href="https://lingubible.com/privacy" style="color: ${colors.linkColor}; text-decoration: none; margin: 0 10px;">${t.footerLinks.privacy}</a>
+                <a href="https://www.lingubible.com/faq" style="color: ${colors.linkColor}; text-decoration: none; margin: 0 10px;">${t.footerLinks.faq}</a> |
+                <a href="https://www.lingubible.com/contact" style="color: ${colors.linkColor}; text-decoration: none; margin: 0 10px;">${t.footerLinks.contact}</a> |
+                <a href="https://www.lingubible.com/terms" style="color: ${colors.linkColor}; text-decoration: none; margin: 0 10px;">${t.footerLinks.terms}</a> |
+                <a href="https://www.lingubible.com/privacy" style="color: ${colors.linkColor}; text-decoration: none; margin: 0 10px;">${t.footerLinks.privacy}</a>
             </div>
         </div>
     </div>

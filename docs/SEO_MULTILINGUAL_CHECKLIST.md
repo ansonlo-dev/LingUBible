@@ -55,7 +55,7 @@ src/hooks/useLanguageFromUrl.ts
 // SEO 設定
 export const SEO_CONFIG = {
   SITE_NAME: 'LingUBible',
-  BASE_URL: 'https://lingubible.com',
+  BASE_URL: 'https://www.lingubible.com',
   SUPPORTED_LANGUAGES: ['en', 'zh-TW', 'zh-CN'],
   // ... 語言特定的 meta 數據
 }
@@ -78,10 +78,10 @@ export const SEO_CONFIG = {
 
 ### Hreflang 實現
 ```html
-<link rel="alternate" hreflang="en" href="https://lingubible.com/?lang=en" />
-<link rel="alternate" hreflang="zh-TW" href="https://lingubible.com/?lang=zh-TW" />
-<link rel="alternate" hreflang="zh-CN" href="https://lingubible.com/?lang=zh-CN" />
-<link rel="alternate" hreflang="x-default" href="https://lingubible.com/?lang=en" />
+<link rel="alternate" hreflang="en" href="https://www.lingubible.com/?lang=en" />
+<link rel="alternate" hreflang="zh-TW" href="https://www.lingubible.com/?lang=zh-TW" />
+<link rel="alternate" hreflang="zh-CN" href="https://www.lingubible.com/?lang=zh-CN" />
+<link rel="alternate" hreflang="x-default" href="https://www.lingubible.com/?lang=en" />
 ```
 
 ## 🧪 測試工具

@@ -17,7 +17,7 @@
 [![Appwrite](https://img.shields.io/badge/Appwrite-19.0.0-FD366E?style=flat-square&logo=appwrite&logoColor=white)](https://appwrite.io/)
 [![ECharts](https://img.shields.io/badge/ECharts-5.6.0-AA344D?style=flat-square&logo=apacheecharts&logoColor=white)](https://echarts.apache.org/)
 
-[![部署至 Appwrite Sites](https://img.shields.io/badge/部署至-Appwrite%20Sites-FD366E?style=flat-square&logo=appwrite&logoColor=white)](https://lingubible.com)
+[![部署至 Appwrite Sites](https://img.shields.io/badge/部署至-Appwrite%20Sites-FD366E?style=flat-square&logo=appwrite&logoColor=white)](https://www.lingubible.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=flat-square)](https://github.com/ansonlo-dev/LingUBible/graphs/commit-activity)
@@ -42,7 +42,7 @@
 
 **LingUBible 已正式上线，服务岭南大学学生：**
 
-### [🔗 lingubible.com](https://lingubible.com)
+### [🔗 lingubible.com](https://www.lingubible.com)
 
 *浏览课程与讲师、阅读及撰写评价、探索交互式成绩分布——无需安装。注册需使用有效的岭南大学电子邮件。*
 
@@ -499,7 +499,7 @@ copies or substantial portions of the Software.
 
 **🔗 相关链接**
 
-[🌐 官方网站](https://lingubible.com) • 
+[🌐 官方网站](https://www.lingubible.com) • 
 [📧 联系我们](mailto:hi@ansonlo.dev) • 
 [💬 讨论区](https://github.com/ansonlo-dev/LingUBible/discussions) • 
 [🐛 问题报告](https://github.com/ansonlo-dev/LingUBible/issues)

@@ -86,7 +86,7 @@ async function createReleaseWithAPI() {
 
 ---
 
-🌐 **線上體驗**: [lingubible.com](https://lingubible.com)
+🌐 **線上體驗**: [lingubible.com](https://www.lingubible.com)
 📚 **文檔**: [部署指南](https://github.com/${owner}/${repo}/tree/main/docs)
 🐛 **問題回報**: [GitHub Issues](https://github.com/${owner}/${repo}/issues)`;
 

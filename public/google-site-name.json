@@ -9,7 +9,7 @@
     "Lingnan University Course Reviews",
     "lingubible.com"
   ],
-  "url": "https://lingubible.com/",
+  "url": "https://www.lingubible.com/",
   "description": "嶺南大學課程與講師評價平台 - 真實可靠的Reg科聖經，幫助同學們作出明智的選課決定",
   "inLanguage": ["zh-TW", "zh-CN", "en"],
   "audience": {
@@ -33,6 +33,6 @@
   "publisher": {
     "@type": "Organization",
     "name": "LingUBible",
-    "url": "https://lingubible.com/"
+    "url": "https://www.lingubible.com/"
   }
 } 
