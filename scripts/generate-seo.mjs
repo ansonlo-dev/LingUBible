@@ -218,12 +218,21 @@ function resetRoot(html) {
   return html.replace(/<div id="root"><!--prerender-->[\s\S]*?<!--\/prerender--><\/div>/, '<div id="root"></div>');
 }
 
+// Appwrite Sites 以目錄提供預渲染頁面，並把 /courses 301 轉到 /courses/。
+// 因此凡是我們實際寫出目錄的路由，canonical 與 sitemap 都要用帶尾斜線的形式，
+// 否則 sitemap 裡每一條都會變成「網頁會重新導向」。未預渲染的路由由 fallback
+// 直接以 200 回應，不能加斜線。
+const canonicalPathOf = (page) => (page.dirServed && page.route !== '/' ? `${page.route}/` : page.route);
+
+// 靜態頁一定會被預渲染，內部連結直接用帶斜線的形式，讓爬蟲少一次轉址
+const dirServedStaticRoutes = new Set();
+
 function replaceTag(html, pattern, replacement) {
   return pattern.test(html) ? html.replace(pattern, replacement) : html;
 }
 
 function buildHtml(template, page) {
-  const canonical = `${SITE_URL}${page.route}`;
+  const canonical = `${SITE_URL}${canonicalPathOf(page)}`;
   const title = esc(page.title);
   const description = esc(truncate(page.description, 300));
   const keywords = esc(page.keywords || BASE_KEYWORDS);
@@ -306,7 +315,7 @@ function breadcrumb(items) {
       '@type': 'ListItem',
       position: i + 1,
       name: it.name,
-      item: `${SITE_URL}${it.route}`,
+      item: `${SITE_URL}${dirServedStaticRoutes.has(it.route) ? `${it.route}/` : it.route}`,
     })),
   };
 }
@@ -339,7 +348,7 @@ function buildStaticPage(def, extraLinks = '') {
     structuredData,
     content: contentBlock(
       `<h1>${esc(def.h1)}</h1><p>${esc(def.body)}</p>${extraLinks}` +
-        `<p class="muted"><a href="/">首頁</a> · <a href="/courses">所有課程</a> · <a href="/instructors">所有講師</a> · <a href="/planner">時間表規劃</a> · <a href="/calendar">學年行事曆</a> · <a href="/faq">常見問題</a></p>`
+        `<p class="muted"><a href="/">首頁</a> · <a href="/courses/">所有課程</a> · <a href="/instructors/">所有講師</a> · <a href="/planner/">時間表規劃</a> · <a href="/calendar/">學年行事曆</a> · <a href="/faq/">常見問題</a></p>`
     ),
   };
 }
@@ -433,14 +442,14 @@ function buildCoursePage(course, instructors) {
       .join(','),
     structuredData,
     content: contentBlock(
-      `<p class="muted"><a href="/">LingUBible</a> › <a href="/courses">所有課程</a></p>` +
+      `<p class="muted"><a href="/">LingUBible</a> › <a href="/courses/">所有課程</a></p>` +
         `<h1>${esc(code)} ${esc(titleEn)}</h1>` +
         (altTitles.length ? `<p>${esc(altTitles.join('　'))}</p>` : '') +
         (desc ? `<p>${esc(truncate(desc, 600))}</p>` : '') +
         (rows ? `<h2>課程數據</h2><ul>${rows}</ul>` : '') +
         `<p>${esc(stats)}</p>` +
         instructorLinks +
-        `<p class="muted"><a href="/courses">瀏覽全部課程</a> · <a href="/instructors">瀏覽全部講師</a></p>`
+        `<p class="muted"><a href="/courses/">瀏覽全部課程</a> · <a href="/instructors/">瀏覽全部講師</a></p>`
     ),
   };
 }
@@ -517,13 +526,13 @@ function buildInstructorPage(instructor, courses) {
       .join(','),
     structuredData,
     content: contentBlock(
-      `<p class="muted"><a href="/">LingUBible</a> › <a href="/instructors">所有講師</a></p>` +
+      `<p class="muted"><a href="/">LingUBible</a> › <a href="/instructors/">所有講師</a></p>` +
         `<h1>${esc(honorific ? `${honorific} ${name}` : name)}</h1>` +
         (altNames.length ? `<p>${esc(altNames.join('　'))}</p>` : '') +
         `<p>${esc(stats)}</p>` +
         (rows ? `<h2>講師數據</h2><ul>${rows}</ul>` : '') +
         courseLinks +
-        `<p class="muted"><a href="/instructors">瀏覽全部講師</a> · <a href="/courses">瀏覽全部課程</a></p>`
+        `<p class="muted"><a href="/instructors/">瀏覽全部講師</a> · <a href="/courses/">瀏覽全部課程</a></p>`
     ),
   };
 }
@@ -547,7 +556,7 @@ function sitemapXml(pages) {
   const urls = pages
     .map((p) => {
       // route 已在建構時經 encodeURIComponent 處理，這裡只需做 XML 逸出
-      const loc = `${SITE_URL}${p.route}`;
+      const loc = `${SITE_URL}${canonicalPathOf(p)}`;
       return [
         '  <url>',
         `    <loc>${esc(loc)}</loc>`,
@@ -662,6 +671,12 @@ async function main() {
         : detailPages.filter((p) => p.reviewCount > 0);
 
   const pagesToWrite = [...staticPages, ...prerendered];
+  for (const page of pagesToWrite) {
+    if (page.route !== '/') {
+      page.dirServed = true;
+      if (STATIC_PAGES.some((d) => d.route === page.route)) dirServedStaticRoutes.add(page.route);
+    }
+  }
   for (const page of pagesToWrite) await writePage(templates, page);
 
   await writeFile(path.join(OUT_DIR, 'sitemap-pages.xml'), sitemapXml(staticPages), 'utf8');
