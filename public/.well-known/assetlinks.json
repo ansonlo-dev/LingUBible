@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "com.lingubible.www.twa",
-        "sha256_cert_fingerprints": ["2B:58:D0:AD:F5:E9:93:36:08:60:5B:2D:11:B2:58:07:12:3F:78:24:0F:BF:C5:43:DE:00:C3:D2:A1:A0:D7:B3"]
+        "sha256_cert_fingerprints": ["2B:58:D0:AD:F5:E9:93:36:08:60:5B:2D:11:B2:58:07:12:3F:78:24:0F:BF:C5:43:DE:00:C3:D2:A1:A0:D7:B3","AE:AF:BE:FA:C8:62:BD:BF:E2:78:9E:0E:68:5B:CA:D6:73:7C:76:C9:32:08:90:CA:AE:F9:BB:51:71:AE:97:F7"]
       }
     }]
