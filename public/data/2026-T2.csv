@@ -152,7 +152,7 @@
 116,,CCC8011,CriticalThinking:Analysis&Arg,15,E,,,LEC,THU,15:30,16:59,LKK107,TBA,
 116,,CCC8011,CriticalThinking:Analysis&Arg,15,E,,,LEC,TUE,17:00,18:29,SEK106,TBA,
 117,,CCC8012,The Making of Hong Kong,1,E,,,LEC,WED,09:30,11:29,MBG22,KWOK Chi / O'CONNOR Paul James / WONG Wai Chung,chikwok@ln.edu.hk;pauloconnor@ln.edu.hk;wongwc@ln.edu.hk
-118,,CCC8012,The Making of Hong Kong,2,E,,,LEC,WED,12:30,14:29,MBG22,O'CONNOR Paul James / WONG Wai Chung / TBA,pauloconnor@ln.edu.hk;wongwc@ln.edu.hk
+118,,CCC8012,The Making of Hong Kong,2,E,,,LEC,WED,12:30,14:29,MBG22,O'CONNOR Paul James / TBA / WONG Wai Chung,pauloconnor@ln.edu.hk;wongwc@ln.edu.hk
 119,,CCC8012,The Making of Hong Kong,3,E,,,LEC,WED,15:30,17:29,MBG22,CHEN Lisha / O'CONNOR Paul James / WONG Wai Chung,lishachen2@ln.edu.hk;pauloconnor@ln.edu.hk;wongwc@ln.edu.hk
 120,,CCC8012,The Making of Hong Kong,4,E,,,TUT,TUE,14:30,15:29,LKK304,KWOK Chi,chikwok@ln.edu.hk
 121,,CCC8012,The Making of Hong Kong,5,E,,,TUT,THU,10:30,11:29,LKK106,KWOK Chi,chikwok@ln.edu.hk
@@ -278,8 +278,8 @@
 233,,CDS2004,Quantitative Decision Making,1,E,,,LEC,WED,09:30,10:59,LKK101,WANG Yu,yuwang26@ln.edu.hk
 234,,CDS3002,OperSimulationDecisionAnalysis,1,E,,,LEC,MON,11:00,12:29,LCH413,LI Nan,nancyli@ln.edu.hk
 234,,CDS3002,OperSimulationDecisionAnalysis,1,E,,,LEC,THU,11:00,12:29,LCH413,LI Nan,nancyli@ln.edu.hk
-235,,CDS3003,Machine Learning,1,E,,,LEC,TUE,14:30,15:59,LKK201,WANG Yu,yuwang26@ln.edu.hk
 235,,CDS3003,Machine Learning,1,E,,,LEC,FRI,13:30,14:59,LKK201,WANG Yu,yuwang26@ln.edu.hk
+235,,CDS3003,Machine Learning,1,E,,,LEC,TUE,14:30,15:59,LKK201,WANG Yu,yuwang26@ln.edu.hk
 236,,CDS4001,Best Practices of Data Science,1,E,,,LEC,MON,09:30,10:59,LKK201,LIEW Jia Xiang,jiaxiangliew@ln.edu.hk
 236,,CDS4001,Best Practices of Data Science,1,E,,,LEC,WED,13:30,14:59,LKK201,LIEW Jia Xiang,jiaxiangliew@ln.edu.hk
 237,,CDS4004,Web Technologies&Soc Networks,1,E,,,LEC,THU,09:30,10:59,SEK105,CHEN Honghua,honghuachen@ln.edu.hk
@@ -411,8 +411,8 @@
 355,,CLB9033,IntroMusOfWorld&Sustainability,1,E,,,LEC,MON,09:30,11:29,LCH411,SHIKAKURA Yui,yuishikakura@ln.edu.hk
 356,,CLB9033,IntroMusOfWorld&Sustainability,2,E,,,TUT,WED,10:30,11:29,LCH411,SHIKAKURA Yui,yuishikakura@ln.edu.hk
 357,,CLB9033,IntroMusOfWorld&Sustainability,3,E,,,TUT,WED,09:30,10:29,LCH411,SHIKAKURA Yui,yuishikakura@ln.edu.hk
-358,,CLB9034,MusAcrGenWesPopMusInPostWWII,1,E,,,LEC,MON,11:30,12:59,LCH411,HOBERMAN Jerome Leonard,jeromehoberman@ln.edu.hk
 358,,CLB9034,MusAcrGenWesPopMusInPostWWII,1,E,,,LEC,WED,11:30,12:59,LCH411,HOBERMAN Jerome Leonard,jeromehoberman@ln.edu.hk
+358,,CLB9034,MusAcrGenWesPopMusInPostWWII,1,E,,,LEC,MON,11:30,12:59,LCH411,HOBERMAN Jerome Leonard,jeromehoberman@ln.edu.hk
 359,,CLB9036,HK Cinema: A Brief History,1,E,,,LEC,FRI,09:30,12:29,MBG12,TBA,
 360,,CLC9002,Managing Personal Finance,1,E,,,LEC,FRI,15:00,17:59,LKK307,SUN Tao,taosun@ln.edu.hk
 361,,CLC9003,Underst. Invest. in St. Mkt,1,E,,,LEC,TUE,09:30,12:29,SEK108,CHOI Ka Sing,wilsonchoi@ln.edu.hk
@@ -439,19 +439,19 @@
 379,,CLD9001,Technology & Cultural Change,1,E,,,LEC,TUE,11:00,12:59,LKK205,LEUNG Shi Chi,shichileung@ln.edu.hk
 380,,CLD9001,Technology & Cultural Change,2,E,,,TUT,WED,09:30,11:29,LKK106,LEUNG Shi Chi,shichileung@ln.edu.hk
 381,,CLD9001,Technology & Cultural Change,3,E,,,TUT,WED,09:30,11:29,LKK106,LEUNG Shi Chi,shichileung@ln.edu.hk
-382,,CLD9003,Statistics in Modern Society,1,E,,,LEC,THU,17:00,18:29,SEK108,LAM Wing Lun,alanlam@ln.edu.hk
 382,,CLD9003,Statistics in Modern Society,1,E,,,LEC,TUE,15:00,16:29,MBG12,LAM Wing Lun,alanlam@ln.edu.hk
+382,,CLD9003,Statistics in Modern Society,1,E,,,LEC,THU,17:00,18:29,SEK108,LAM Wing Lun,alanlam@ln.edu.hk
 383,,CLD9004,Math Literacy in Today's World,1,E,,,LEC,MON,12:30,15:29,LKK107,CHUNG Chi Wai,chungcw@ln.edu.hk
-384,,CLD9008,LifeScience:The Way Life Works,1,E,,,LEC,MON,11:30,12:59,LKK301,TSANG Hin Fat,alphonsetsang@ln.edu.hk
 384,,CLD9008,LifeScience:The Way Life Works,1,E,,,LEC,THU,15:00,16:29,SEK106,TSANG Hin Fat,alphonsetsang@ln.edu.hk
+384,,CLD9008,LifeScience:The Way Life Works,1,E,,,LEC,MON,11:30,12:59,LKK301,TSANG Hin Fat,alphonsetsang@ln.edu.hk
 385,,CLD9012,Natural Disasters:Sci&Society,1,E,,,LEC,FRI,16:30,18:29,MBG10,CONTI-JERPE Inga Elizabeth,ingacontijerpe@ln.edu.hk
 386,,CLD9012,Natural Disasters:Sci&Society,2,E,,,TUT,THU,09:30,10:29,LKK102,CONTI-JERPE Inga Elizabeth,ingacontijerpe@ln.edu.hk
 387,,CLD9012,Natural Disasters:Sci&Society,3,E,,,TUT,THU,10:30,11:29,LKK102,CONTI-JERPE Inga Elizabeth,ingacontijerpe@ln.edu.hk
 388,,CLD9017,Ecology:SciEnvironmentalIssues,1,E,,SO,LEC,FRI,13:00,14:29,MBG10,HUI Tin Yan,tinyanhui@ln.edu.hk
 388,,CLD9017,Ecology:SciEnvironmentalIssues,1,E,,SO,LEC,WED,17:00,18:29,LKK107,HUI Tin Yan,tinyanhui@ln.edu.hk
 389,,CLD9018,Natural History of Hong Kong,1,E,,,LEC,MON,15:30,16:29,SEK107,LEE Ho,rogerlee2@ln.edu.hk
-389,,CLD9018,Natural History of Hong Kong,1,E,,,LEC,THU,13:30,15:29,MBG19,LEE Ho,rogerlee2@ln.edu.hk
 389,,CLD9018,Natural History of Hong Kong,1,E,,,LEC,THU,15:30,17:29,MBG19,LEE Ho,rogerlee2@ln.edu.hk
+389,,CLD9018,Natural History of Hong Kong,1,E,,,LEC,THU,13:30,15:29,MBG19,LEE Ho,rogerlee2@ln.edu.hk
 5412,,CLD9024,Mapping Our Changing World,1,E,,,LEC,THU,13:30,16:29,LCH206,TBA,
 390,,CLD9026,"Food:Health,Tech&Environment",1,E,,,LEC,FRI,09:30,11:29,MBG11,LAU Yin Kun Anthony,antlau@ln.edu.hk
 391,,CLD9026,"Food:Health,Tech&Environment",2,E,,,TUT,THU,09:30,10:29,LKK210,LAU Yin Kun Anthony,antlau@ln.edu.hk
@@ -694,48 +694,48 @@
 604,,HST4302,Senior History DR Project,1,E,,,PRJ,,,,,,
 605,,HST4361,CriticalThemePreModernChiHist,1,E,,,LEC,TUE,13:30,16:29,LKKG04,LIU William Guanglin,guanglinliu@ln.edu.hk
 606,,HST4499D,Violence in Modern History,1,E,,,LEC,THU,09:30,12:29,LKK104,CHANG Kin Ian,monicachang@ln.edu.hk
-607,,JAP1102,Japanese I,1,5,,,TUT,TUE,12:00,13:29,LKK110,FAN Ho Yin,hoyinfan@ln.edu.hk
 607,,JAP1102,Japanese I,1,5,,,TUT,FRI,12:00,13:29,LKK110,FAN Ho Yin,hoyinfan@ln.edu.hk
+607,,JAP1102,Japanese I,1,5,,,TUT,TUE,12:00,13:29,LKK110,FAN Ho Yin,hoyinfan@ln.edu.hk
 608,,JAP1102,Japanese I,2,5,,,TUT,TUE,17:00,18:29,LKK210,FAN Ho Yin,hoyinfan@ln.edu.hk
 608,,JAP1102,Japanese I,2,5,,,TUT,FRI,09:00,10:29,LKK110,FAN Ho Yin,hoyinfan@ln.edu.hk
-609,,JAP1202,Japanese II,1,5,,,TUT,TUE,15:30,16:59,LKK210,FAN Ho Yin,hoyinfan@ln.edu.hk
 609,,JAP1202,Japanese II,1,5,,,TUT,FRI,15:30,16:59,LKK210,FAN Ho Yin,hoyinfan@ln.edu.hk
+609,,JAP1202,Japanese II,1,5,,,TUT,TUE,15:30,16:59,LKK210,FAN Ho Yin,hoyinfan@ln.edu.hk
 610,,JAP1302,Japanese III,1,5,,,TUT,TUE,10:30,11:59,LKK110,FAN Ho Yin,hoyinfan@ln.edu.hk
 610,,JAP1302,Japanese III,1,5,,,TUT,FRI,10:30,11:59,LKK110,FAN Ho Yin,hoyinfan@ln.edu.hk
 611,,JAP2001,Japanese Language and Culture,1,5,,,TUT,TUE,14:00,15:29,LKK210,FAN Ho Yin,hoyinfan@ln.edu.hk
 611,,JAP2001,Japanese Language and Culture,1,5,,,TUT,FRI,14:00,15:29,LKK210,FAN Ho Yin,hoyinfan@ln.edu.hk
-612,,KOR1102,Korean I,1,5,,,TUT,WED,09:30,10:59,LKK210,LIM Suyeon,suyeonlim@ln.edu.hk
 612,,KOR1102,Korean I,1,5,,,TUT,MON,09:30,10:59,LKK210,LIM Suyeon,suyeonlim@ln.edu.hk
-613,,KOR1102,Korean I,2,5,,,TUT,WED,11:00,12:29,LKK210,LIM Suyeon,suyeonlim@ln.edu.hk
+612,,KOR1102,Korean I,1,5,,,TUT,WED,09:30,10:59,LKK210,LIM Suyeon,suyeonlim@ln.edu.hk
 613,,KOR1102,Korean I,2,5,,,TUT,MON,11:00,12:29,LKK210,LIM Suyeon,suyeonlim@ln.edu.hk
+613,,KOR1102,Korean I,2,5,,,TUT,WED,11:00,12:29,LKK210,LIM Suyeon,suyeonlim@ln.edu.hk
 614,,KOR1202,Korean II,1,5,,,TUT,WED,13:00,14:29,LKK110,LIM Suyeon,suyeonlim@ln.edu.hk
 614,,KOR1202,Korean II,1,5,,,TUT,MON,13:00,14:29,LKK110,LIM Suyeon,suyeonlim@ln.edu.hk
 615,,KOR1302,Korean III,1,5,,,TUT,WED,14:30,15:59,LKK110,LIM Suyeon,suyeonlim@ln.edu.hk
 615,,KOR1302,Korean III,1,5,,,TUT,FRI,11:00,12:29,LKK210,LIM Suyeon,suyeonlim@ln.edu.hk
-616,,KOR2002,ExplKoreanTradCulThroFolktales,1,5,,,TUT,MON,14:30,15:59,LKK110,LIM Suyeon,suyeonlim@ln.edu.hk
 616,,KOR2002,ExplKoreanTradCulThroFolktales,1,5,,,TUT,FRI,09:30,10:59,LKK210,LIM Suyeon,suyeonlim@ln.edu.hk
+616,,KOR2002,ExplKoreanTradCulThroFolktales,1,5,,,TUT,MON,14:30,15:59,LKK110,LIM Suyeon,suyeonlim@ln.edu.hk
 617,,LCC1010,Chinese Communication I,1,P,,,TUT,TUE,11:30,13:29,LBY303,LI Fei,f2li@ln.edu.hk
 617,,LCC1010,Chinese Communication I,1,P,,,TUT,THU,13:30,15:29,WYL103,LI Fei,f2li@ln.edu.hk
-618,,LCC1010,Chinese Communication I,2,P,,,TUT,THU,16:30,18:29,LBY303,LI Fei,f2li@ln.edu.hk
 618,,LCC1010,Chinese Communication I,2,P,,,TUT,MON,13:30,15:29,LKK108,LI Fei,f2li@ln.edu.hk
+618,,LCC1010,Chinese Communication I,2,P,,,TUT,THU,16:30,18:29,LBY303,LI Fei,f2li@ln.edu.hk
 619,,LCC1010,Chinese Communication I,3,P,,,TUT,TUE,08:30,10:29,WYL103,LI Fei / TBA,f2li@ln.edu.hk
 619,,LCC1010,Chinese Communication I,3,P,,,TUT,FRI,09:30,11:29,LCH202,LI Fei / TBA,f2li@ln.edu.hk
-620,,LCC1010,Chinese Communication I,4,P,,,TUT,WED,13:00,14:59,LBY303,ZHOU Bo,victorzhou@ln.edu.hk
 620,,LCC1010,Chinese Communication I,4,P,,,TUT,FRI,11:30,13:29,LKK208,ZHOU Bo,victorzhou@ln.edu.hk
+620,,LCC1010,Chinese Communication I,4,P,,,TUT,WED,13:00,14:59,LBY303,ZHOU Bo,victorzhou@ln.edu.hk
 621,,LCC1010,Chinese Communication I,5,P,,,TUT,TUE,15:30,17:29,LCH202,TANG Lili,lilitang@ln.edu.hk
 621,,LCC1010,Chinese Communication I,5,P,,,TUT,THU,15:30,17:29,LKK108,TANG Lili,lilitang@ln.edu.hk
-622,,LCC1010,Chinese Communication I,6,P,,,TUT,WED,16:30,18:29,LCH201,TANG Lili,lilitang@ln.edu.hk
 622,,LCC1010,Chinese Communication I,6,P,,,TUT,FRI,09:30,11:29,LKK208,TANG Lili,lilitang@ln.edu.hk
+622,,LCC1010,Chinese Communication I,6,P,,,TUT,WED,16:30,18:29,LCH201,TANG Lili,lilitang@ln.edu.hk
 623,,LCC1010,Chinese Communication I,7,P,,,TUT,TUE,11:30,13:29,LCH202,TANG Lili,lilitang@ln.edu.hk
 623,,LCC1010,Chinese Communication I,7,P,,,TUT,THU,11:30,13:29,LKKG01,TANG Lili,lilitang@ln.edu.hk
-624,,LCC1010,Chinese Communication I,8,P,,,TUT,TUE,09:30,11:29,LCH202,YEUNG Fan,yeungfan@ln.edu.hk
 624,,LCC1010,Chinese Communication I,8,P,,,TUT,THU,11:30,13:29,LKK304,YEUNG Fan,yeungfan@ln.edu.hk
+624,,LCC1010,Chinese Communication I,8,P,,,TUT,TUE,09:30,11:29,LCH202,YEUNG Fan,yeungfan@ln.edu.hk
 625,,LCC1010,Chinese Communication I,9,P,,,TUT,TUE,16:30,18:29,LBY303,ZHANG Meng,juliezhang@ln.edu.hk
 625,,LCC1010,Chinese Communication I,9,P,,,TUT,FRI,10:30,12:29,LKK304,ZHANG Meng,juliezhang@ln.edu.hk
-626,,LCC1010,Chinese Communication I,10,P,,,TUT,TUE,10:30,12:29,WYL103,TBA,
 626,,LCC1010,Chinese Communication I,10,P,,,TUT,FRI,11:30,13:29,LCH202,TBA,
-627,,LCC1010,Chinese Communication I,11,P,,,TUT,TUE,08:30,10:29,LKK310,TBA,
+626,,LCC1010,Chinese Communication I,10,P,,,TUT,TUE,10:30,12:29,WYL103,TBA,
 627,,LCC1010,Chinese Communication I,11,P,,,TUT,THU,08:30,10:29,LCH202,TBA,
+627,,LCC1010,Chinese Communication I,11,P,,,TUT,TUE,08:30,10:29,LKK310,TBA,
 628,,LCC1010,Chinese Communication I,12,P,,,TUT,TUE,10:30,12:29,LKK310,TBA,
 628,,LCC1010,Chinese Communication I,12,P,,,TUT,THU,10:30,12:29,LCH202,TBA,
 629,,LCC1010,Chinese Communication I,13,P,,,TUT,TUE,13:30,15:29,LKK110,LI Dong Hui,dhuili@ln.edu.hk
@@ -752,8 +752,8 @@
 634,,LCC1604,Chinese as a 2nd Lang IV,1,2,,,TUT,FRI,17:30,18:29,WYL103,TBA,
 635,,LCC1606,Chin as a Second Language VI,1,4,,,TUT,WED,12:30,13:29,WYL105,WEI Sijing,sylviawei@ln.edu.hk
 635,,LCC1606,Chin as a Second Language VI,1,4,,,TUT,MON,13:30,15:29,LKK206,WEI Sijing,sylviawei@ln.edu.hk
-636,,LCC1802,Practical Cantonese I,1,P,,,TUT,FRI,09:30,10:29,WYL105,TBA,
 636,,LCC1802,Practical Cantonese I,1,P,,,TUT,WED,09:30,11:29,WYL105,TBA,
+636,,LCC1802,Practical Cantonese I,1,P,,,TUT,FRI,09:30,10:29,WYL105,TBA,
 637,,LCC1802,Practical Cantonese I,2,P,,,TUT,WED,11:30,12:29,WYL105,TBA,
 637,,LCC1802,Practical Cantonese I,2,P,,,TUT,FRI,10:30,12:29,WYL105,TBA,
 638,,LCC1802,Practical Cantonese I,3,P,,,TUT,WED,13:30,15:29,WYL105,TBA,
@@ -787,8 +787,8 @@
 652,,LCC2010,Chinese Communication II,9,P,,,TUT,THU,10:30,12:29,LKKG02,WEI Sijing,sylviawei@ln.edu.hk
 653,,LCC2010,Chinese Communication II,10,P,,,TUT,WED,15:00,16:59,LBY303,WEI Sijing,sylviawei@ln.edu.hk
 653,,LCC2010,Chinese Communication II,10,P,,,TUT,MON,09:30,11:29,WYL113,WEI Sijing,sylviawei@ln.edu.hk
-654,,LCC2010,Chinese Communication II,11,P,,,TUT,THU,13:30,15:29,LKK308,WEI Sijing / ZHANG Paiyu,sylviawei@ln.edu.hk;paiyuzhang@ln.edu.hk
 654,,LCC2010,Chinese Communication II,11,P,,,TUT,TUE,13:30,15:29,LCH202,WEI Sijing / ZHANG Paiyu,sylviawei@ln.edu.hk;paiyuzhang@ln.edu.hk
+654,,LCC2010,Chinese Communication II,11,P,,,TUT,THU,13:30,15:29,LKK308,WEI Sijing / ZHANG Paiyu,sylviawei@ln.edu.hk;paiyuzhang@ln.edu.hk
 655,,LCC2010,Chinese Communication II,12,P,,,TUT,WED,10:30,12:29,LKK308,YEUNG Fan,yeungfan@ln.edu.hk
 655,,LCC2010,Chinese Communication II,12,P,,,TUT,FRI,09:30,11:29,LBY303,YEUNG Fan,yeungfan@ln.edu.hk
 656,,LCC2010,Chinese Communication II,13,P,,,TUT,TUE,13:30,15:29,LCH201,YEUNG Fan,yeungfan@ln.edu.hk
@@ -817,62 +817,62 @@
 667,,LCC2010,Chinese Communication II,24,P,,,TUT,FRI,11:30,13:29,LCH201,TBA,
 668,,LCC2010,Chinese Communication II,25,P,,,TUT,WED,14:30,16:29,LKK204,TBA,
 668,,LCC2010,Chinese Communication II,25,P,,,TUT,FRI,14:30,16:29,LCH201,TBA,
-669,,LCC2210,Advanced Chinese Communication,1,P,,,TUT,THU,10:30,12:29,LKK204,LI Fei,f2li@ln.edu.hk
 669,,LCC2210,Advanced Chinese Communication,1,P,,,TUT,TUE,15:30,16:29,WYL111,LI Fei,f2li@ln.edu.hk
+669,,LCC2210,Advanced Chinese Communication,1,P,,,TUT,THU,10:30,12:29,LKK204,LI Fei,f2li@ln.edu.hk
 670,,LCC2210,Advanced Chinese Communication,2,P,,,TUT,MON,09:30,11:29,WYL111,LI Fei,f2li@ln.edu.hk
 670,,LCC2210,Advanced Chinese Communication,2,P,,,TUT,FRI,15:30,16:29,LKK208,LI Fei,f2li@ln.edu.hk
 671,,LCC2210,Advanced Chinese Communication,3,P,,,TUT,TUE,14:30,15:29,WYL111,LI Fei,f2li@ln.edu.hk
 671,,LCC2210,Advanced Chinese Communication,3,P,,,TUT,FRI,13:30,15:29,LKK208,LI Fei,f2li@ln.edu.hk
-672,,LCC2220,Chi Communication for Business,1,P,,,TUT,TUE,11:30,12:29,MBG10,WEI Sijing,sylviawei@ln.edu.hk
 672,,LCC2220,Chi Communication for Business,1,P,,,TUT,THU,16:30,18:29,WYL109,WEI Sijing,sylviawei@ln.edu.hk
+672,,LCC2220,Chi Communication for Business,1,P,,,TUT,TUE,11:30,12:29,MBG10,WEI Sijing,sylviawei@ln.edu.hk
 673,,LCC2220,Chi Communication for Business,2,P,,,TUT,WED,09:30,11:29,LKK108,WEI Sijing,sylviawei@ln.edu.hk
 673,,LCC2220,Chi Communication for Business,2,P,,,TUT,MON,15:30,16:29,LKK206,WEI Sijing,sylviawei@ln.edu.hk
-674,,LCC2230,Putonghua Advanced Comm Skills,1,P,,,TUT,WED,11:30,13:29,LKKG01,ZHANG Paiyu,paiyuzhang@ln.edu.hk
 674,,LCC2230,Putonghua Advanced Comm Skills,1,P,,,TUT,MON,14:30,15:29,LKK208,ZHANG Paiyu,paiyuzhang@ln.edu.hk
-675,,LCC2230,Putonghua Advanced Comm Skills,2,P,,,TUT,WED,10:00,10:59,WYL103,ZHANG Paiyu,paiyuzhang@ln.edu.hk
+674,,LCC2230,Putonghua Advanced Comm Skills,1,P,,,TUT,WED,11:30,13:29,LKKG01,ZHANG Paiyu,paiyuzhang@ln.edu.hk
 675,,LCC2230,Putonghua Advanced Comm Skills,2,P,,,TUT,MON,11:30,13:29,SEK108,ZHANG Paiyu,paiyuzhang@ln.edu.hk
+675,,LCC2230,Putonghua Advanced Comm Skills,2,P,,,TUT,WED,10:00,10:59,WYL103,ZHANG Paiyu,paiyuzhang@ln.edu.hk
 676,,LCC2230,Putonghua Advanced Comm Skills,3,P,,,TUT,WED,15:30,17:29,LKK304,ZHANG Paiyu,paiyuzhang@ln.edu.hk
 676,,LCC2230,Putonghua Advanced Comm Skills,3,P,,,TUT,MON,15:30,16:29,LKK208,ZHANG Paiyu,paiyuzhang@ln.edu.hk
 677,,LCC2240,Enhancing Skills for Putonghua,1,P,,,TUT,TUE,13:30,15:29,SEK107,TBA,
 678,,LCC2240,Enhancing Skills for Putonghua,2,P,,,TUT,THU,13:30,15:29,WYL105,TBA,
 679,,LCC2250,Chi Theatrical Arts: Lang&Cul,1,P,,,LEC,WED,13:30,15:29,LKK210,TBA,
 680,,LCC2250,Chi Theatrical Arts: Lang&Cul,2,P,,,TUT,THU,13:30,14:29,LKK306,TBA,
-681,,LCC3210,Chi Reading&Oral Expression,1,P,,,TUT,WED,13:30,14:29,LKK306,MA Maopeng Paul,m2ma@ln.edu.hk
 681,,LCC3210,Chi Reading&Oral Expression,1,P,,,TUT,MON,09:30,11:29,LKK308,MA Maopeng Paul,m2ma@ln.edu.hk
-682,,LCC3220,EffectiveWorkplaceChiWriting,1,P,,,TUT,WED,13:30,15:29,WYL111,TANG Lili,lilitang@ln.edu.hk
+681,,LCC3210,Chi Reading&Oral Expression,1,P,,,TUT,WED,13:30,14:29,LKK306,MA Maopeng Paul,m2ma@ln.edu.hk
 682,,LCC3220,EffectiveWorkplaceChiWriting,1,P,,,TUT,FRI,16:30,17:29,LKK208,TANG Lili,lilitang@ln.edu.hk
+682,,LCC3220,EffectiveWorkplaceChiWriting,1,P,,,TUT,WED,13:30,15:29,WYL111,TANG Lili,lilitang@ln.edu.hk
 683,,LCC3220,EffectiveWorkplaceChiWriting,2,P,,,TUT,TUE,09:30,10:29,LKK110,TANG Lili,lilitang@ln.edu.hk
 683,,LCC3220,EffectiveWorkplaceChiWriting,2,P,,,TUT,FRI,13:30,15:29,LKK107,TANG Lili,lilitang@ln.edu.hk
 684,,LUE1001,University English I,1,E,,,TUT,WED,09:30,11:29,WYL111,LAI Sui Yee,lcrachel@ln.edu.hk
 684,,LUE1001,University English I,1,E,,,TUT,FRI,15:30,17:29,LKKG01,LAI Sui Yee,lcrachel@ln.edu.hk
-685,,LUE1001,University English I,2,E,,,TUT,WED,12:30,14:29,LKKG05,LAI Sui Yee,lcrachel@ln.edu.hk
 685,,LUE1001,University English I,2,E,,,TUT,MON,11:30,13:29,LKK304,LAI Sui Yee,lcrachel@ln.edu.hk
+685,,LUE1001,University English I,2,E,,,TUT,WED,12:30,14:29,LKKG05,LAI Sui Yee,lcrachel@ln.edu.hk
 686,,LUE1001,University English I,3,E,,,TUT,THU,13:30,15:29,WYL115,LAI Sui Yee,lcrachel@ln.edu.hk
 686,,LUE1001,University English I,3,E,,,TUT,MON,14:30,16:29,LKK302,LAI Sui Yee,lcrachel@ln.edu.hk
-687,,LUE1001,University English I,4,E,,,TUT,WED,15:30,17:29,WYL113,LAI Sui Yee,lcrachel@ln.edu.hk
 687,,LUE1001,University English I,4,E,,,TUT,FRI,11:30,13:29,WYL115,LAI Sui Yee,lcrachel@ln.edu.hk
-688,,LUE1001,University English I,5,E,,,TUT,THU,09:30,11:29,WYL115,LAI Sui Yee,lcrachel@ln.edu.hk
+687,,LUE1001,University English I,4,E,,,TUT,WED,15:30,17:29,WYL113,LAI Sui Yee,lcrachel@ln.edu.hk
 688,,LUE1001,University English I,5,E,,,TUT,MON,08:30,10:29,LKK303,LAI Sui Yee,lcrachel@ln.edu.hk
+688,,LUE1001,University English I,5,E,,,TUT,THU,09:30,11:29,WYL115,LAI Sui Yee,lcrachel@ln.edu.hk
 689,,LUE1002,University English II,1,E,,,TUT,TUE,12:30,14:29,SEK108,ROWE Lawrence Vernon,lawrencerowe@ln.edu.hk
 689,,LUE1002,University English II,1,E,,,TUT,THU,16:30,18:29,MBG10,ROWE Lawrence Vernon,lawrencerowe@ln.edu.hk
 690,,LUE1002,University English II,2,E,,,TUT,TUE,16:30,18:29,WYL111,ROWE Lawrence Vernon,lawrencerowe@ln.edu.hk
 690,,LUE1002,University English II,2,E,,,TUT,FRI,16:30,18:29,LKK203,ROWE Lawrence Vernon,lawrencerowe@ln.edu.hk
-691,,LUE1002,University English II,3,E,,,TUT,WED,09:30,11:29,LKK107,ROWE Lawrence Vernon,lawrencerowe@ln.edu.hk
 691,,LUE1002,University English II,3,E,,,TUT,FRI,13:30,15:29,MBG11,ROWE Lawrence Vernon,lawrencerowe@ln.edu.hk
+691,,LUE1002,University English II,3,E,,,TUT,WED,09:30,11:29,LKK107,ROWE Lawrence Vernon,lawrencerowe@ln.edu.hk
 692,,LUE1002,University English II,4,E,,,TUT,WED,14:30,16:29,WYL115,ROWE Lawrence Vernon,lawrencerowe@ln.edu.hk
 692,,LUE1002,University English II,4,E,,,TUT,FRI,09:30,11:29,LKK303,ROWE Lawrence Vernon,lawrencerowe@ln.edu.hk
-693,,LUE1002,University English II,5,E,,,TUT,THU,16:30,18:29,WYL111,MUDDEMAN Gary John,garymuddeman@ln.edu.hk
 693,,LUE1002,University English II,5,E,,,TUT,MON,11:30,13:29,WYL111,MUDDEMAN Gary John,garymuddeman@ln.edu.hk
-694,,LUE1002,University English II,6,E,,,TUT,MON,14:30,16:29,WYL115,MUDDEMAN Gary John,garymuddeman@ln.edu.hk
+693,,LUE1002,University English II,5,E,,,TUT,THU,16:30,18:29,WYL111,MUDDEMAN Gary John,garymuddeman@ln.edu.hk
 694,,LUE1002,University English II,6,E,,,TUT,FRI,14:30,16:29,MBG10,MUDDEMAN Gary John,garymuddeman@ln.edu.hk
-695,,LUE1002,University English II,7,E,,,TUT,WED,12:30,14:29,SEK107,MUDDEMAN Gary John,garymuddeman@ln.edu.hk
+694,,LUE1002,University English II,6,E,,,TUT,MON,14:30,16:29,WYL115,MUDDEMAN Gary John,garymuddeman@ln.edu.hk
 695,,LUE1002,University English II,7,E,,,TUT,FRI,09:30,11:29,SEK106,MUDDEMAN Gary John,garymuddeman@ln.edu.hk
+695,,LUE1002,University English II,7,E,,,TUT,WED,12:30,14:29,SEK107,MUDDEMAN Gary John,garymuddeman@ln.edu.hk
 696,,LUE1002,University English II,8,E,,,TUT,WED,15:30,17:29,WYL111,MUDDEMAN Gary John,garymuddeman@ln.edu.hk
 696,,LUE1002,University English II,8,E,,,TUT,MON,08:30,10:29,LKK106,MUDDEMAN Gary John,garymuddeman@ln.edu.hk
-697,,LUE1002,University English II,9,E,,,TUT,WED,11:30,13:29,LKK107,MOGULSKY Henry Valery,henrymogulsky@ln.edu.hk
 697,,LUE1002,University English II,9,E,,,TUT,FRI,09:30,11:29,SEK108,MOGULSKY Henry Valery,henrymogulsky@ln.edu.hk
-698,,LUE1002,University English II,10,E,,,TUT,MON,09:00,10:59,LKK110,NICKALLS Richard John,richardnickalls@ln.edu.hk
+697,,LUE1002,University English II,9,E,,,TUT,WED,11:30,13:29,LKK107,MOGULSKY Henry Valery,henrymogulsky@ln.edu.hk
 698,,LUE1002,University English II,10,E,,,TUT,FRI,15:30,17:29,LKK308,NICKALLS Richard John,richardnickalls@ln.edu.hk
+698,,LUE1002,University English II,10,E,,,TUT,MON,09:00,10:59,LKK110,NICKALLS Richard John,richardnickalls@ln.edu.hk
 699,,LUE1002,University English II,11,E,,,TUT,TUE,15:00,16:59,WYL113,NICKALLS Richard John,richardnickalls@ln.edu.hk
 699,,LUE1002,University English II,11,E,,,TUT,THU,13:30,15:29,LKK107,NICKALLS Richard John,richardnickalls@ln.edu.hk
 700,,LUE1002,University English II,12,E,,,TUT,FRI,09:30,11:29,LKK308,NICKALLS Richard John,richardnickalls@ln.edu.hk
@@ -1075,10 +1075,10 @@
 809,,MPA4001,Internship Performing Arts Adm,1,E,,,PRJ,,,,,,
 810,,PAI3001,DataAnalysisForTheHumanities,1,E,,,LEC,FRI,14:00,15:29,WYL113,MATTHIAS Andreas,matthias@ln.edu.hk
 810,,PAI3001,DataAnalysisForTheHumanities,1,E,,,LEC,WED,14:00,15:29,WYL107,MATTHIAS Andreas,matthias@ln.edu.hk
-811,,PAI3002,Ethics&Artificial Intelligence,1,E,,,LEC,FRI,09:30,10:59,WYL115,SUNG Leora Urim,leorasung@ln.edu.hk
-811,,PAI3002,Ethics&Artificial Intelligence,1,E,,,LEC,WED,09:30,10:59,LKK304,SUNG Leora Urim,leorasung@ln.edu.hk
-812,,PAI4001,AI Ethics and Social Policy,1,E,,,LEC,MON,11:00,12:29,LKK208,O'BRIEN Gary David,garyobrien@ln.edu.hk
-812,,PAI4001,AI Ethics and Social Policy,1,E,,,LEC,THU,09:30,10:59,LKK208,O'BRIEN Gary David,garyobrien@ln.edu.hk
+811,,PAI3002,Ethics&Artificial Intelligence,1,E,,SO,LEC,FRI,09:30,10:59,WYL115,SUNG Leora Urim,leorasung@ln.edu.hk
+811,,PAI3002,Ethics&Artificial Intelligence,1,E,,SO,LEC,WED,09:30,10:59,LKK304,SUNG Leora Urim,leorasung@ln.edu.hk
+812,,PAI4001,AI Ethics and Social Policy,1,E,,SO,LEC,MON,11:00,12:29,LKK208,O'BRIEN Gary David,garyobrien@ln.edu.hk
+812,,PAI4001,AI Ethics and Social Policy,1,E,,SO,LEC,THU,09:30,10:59,LKK208,O'BRIEN Gary David,garyobrien@ln.edu.hk
 813,,PAI4002,Conscious.Creativi&Computation,1,E,,,LEC,FRI,17:00,18:29,LKK210,TBA,
 813,,PAI4002,Conscious.Creativi&Computation,1,E,,,LEC,WED,16:30,17:59,LKK108,TBA,
 814,,PHI1003,Ethics: East and West,1,E,,,LEC,FRI,11:30,12:59,LYH201/1,SUNG Leora Urim,leorasung@ln.edu.hk
@@ -1284,6 +1284,9 @@
 1007,,SOC3335,Housing and Society,2,E,,,TUT,TUE,13:30,14:29,SEK104,YAU Yung,yungyau@ln.edu.hk
 1008,,SOC3335,Housing and Society,3,E,,,TUT,TUE,16:30,17:29,WYL107,YAU Yung,yungyau@ln.edu.hk
 1009,,SOC3335,Housing and Society,4,E,,,TUT,TUE,12:30,13:29,SEK104,YAU Yung,yungyau@ln.edu.hk
+1010,,SOC3336,Digital Society,1,E,,,LEC,THU,15:30,17:29,LYH317,TSANG Pak Lik,alextsang2@ln.edu.hk
+1011,,SOC3336,Digital Society,2,E,,,TUT,FRI,13:30,14:29,LKK204,TSANG Pak Lik,alextsang2@ln.edu.hk
+1012,,SOC3336,Digital Society,3,E,,,TUT,FRI,14:30,15:29,LKK204,TSANG Pak Lik,alextsang2@ln.edu.hk
 1013,,SOC4101,Qualitative Research Methods,1,E,,,LEC,WED,13:30,16:29,LKK107,LEUNG Ho Man,leoleung3@ln.edu.hk
 1014,,SOC4104,Sociological Analysis,1,E,,,LEC,MON,09:30,12:29,WYL107,DAVID Roman,rdavid@ln.edu.hk
 1015,,SOC4328,"Ageing, Adaptation&Change",1,E,,SO,LEC,WED,09:30,11:29,LKK301,CHIU Tuen Yi,tuenyichiu@ln.edu.hk
