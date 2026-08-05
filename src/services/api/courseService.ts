@@ -3000,10 +3000,30 @@ export class CourseService {
         const coursesByCode = new Map<string, Course>();
         allCourses.forEach(course => coursesByCode.set(course.course_code, course));
 
+        // 舊匯入評論帶有特殊 term_code（UNKNOWN / 2021_on_or_before / 純年份等，
+        // 不在 terms 表）與佔位 course_code（LCCXXXX 等，不在 courses 表）。
+        // 比照 getInstructorReviewsFromDetails 的慣例建立 fallback 物件而非丟棄，
+        // 否則全站評論數會對不上（曾因此只顯示 494/1306 筆）。
+        // fallback term 的 name 保留原始代碼，由 UI 的 getTermName() 翻譯顯示。
         const reviewsWithInfo = reviews.map(review => {
-          const term = termsByCode.get(review.term_code);
-          const course = coursesByCode.get(review.course_code);
-          if (!term || !course) return null;
+          const term: Term = termsByCode.get(review.term_code) || {
+            $id: `fallback_${review.term_code}`,
+            term_code: review.term_code,
+            name: review.term_code,
+            start_date: '',
+            end_date: '',
+            $createdAt: '',
+            $updatedAt: ''
+          } as Term;
+          const course: Course = coursesByCode.get(review.course_code) || {
+            $id: `fallback_${review.course_code}`,
+            course_code: review.course_code,
+            course_title: review.course_code,
+            department: 'Unknown',
+            credits: '3',
+            $createdAt: '',
+            $updatedAt: ''
+          } as unknown as Course;
           const voteStats = voteStatsMap.get(review.$id) || { upvotes: 0, downvotes: 0 };
           return {
             review,
@@ -3013,7 +3033,7 @@ export class CourseService {
             upvotes: voteStats.upvotes,
             downvotes: voteStats.downvotes,
           };
-        }).filter((info): info is NonNullable<typeof info> => info !== null);
+        });
 
         const result = {
           reviews: reviewsWithInfo,

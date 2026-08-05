@@ -18,7 +18,7 @@ import { CourseService } from '@/services/api/courseService';
 import type { InstructorReviewFromDetails, Instructor } from '@/services/api/courseService';
 import { hasMarkdownFormatting, renderCommentMarkdown } from '@/utils/ui/markdownRenderer';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
-import { getInstructorName, getCourseTitle } from '@/utils/textUtils';
+import { getInstructorName, getCourseTitle, getTermName } from '@/utils/textUtils';
 import { getGPA } from '@/utils/gradeUtils';
 import { LatestReviewsFilters, LatestReviewFilters } from '@/components/features/reviews/LatestReviewsFilters';
 
@@ -154,7 +154,14 @@ const LatestReviews = () => {
       })
     );
     const sortedTermCounts = Object.fromEntries(
-      Object.entries(termCounts).sort((a, b) => b[0].localeCompare(a[0]))
+      Object.entries(termCounts).sort((a, b) => {
+        // 正式學期代碼（2024-T1 / 2024-S）由新至舊排前面，
+        // 舊格式代碼（UNKNOWN / *_on_or_before / 純年份）排後面
+        const realA = /^\d{4}-(T\d|S)$/.test(a[0]);
+        const realB = /^\d{4}-(T\d|S)$/.test(b[0]);
+        if (realA !== realB) return realA ? -1 : 1;
+        return b[0].localeCompare(a[0]);
+      })
     );
     const sortedInstructorCounts = Object.fromEntries(
       Object.entries(instructorCounts).sort((a, b) => a[0].localeCompare(b[0]))
@@ -427,7 +434,7 @@ const LatestReviews = () => {
                           {/* 學期和語言徽章 - 手機版顯示 */}
                           <div className="flex flex-wrap gap-1.5 md:hidden">
                             <span className="px-2 py-1 text-xs rounded-md border bg-background border-border w-fit">
-                              {reviewInfo.term.name}
+                              {getTermName(reviewInfo.term.name, t)}
                             </span>
                             {reviewInfo.review.review_language && (
                               <span className="px-2 py-1 text-xs rounded-md border bg-background border-border w-fit">
@@ -466,7 +473,7 @@ const LatestReviews = () => {
                         <div className="flex items-start gap-3 shrink-0">
                           <div className="hidden md:flex items-center gap-2 shrink-0">
                             <span className="px-2 py-1 text-xs rounded-md border bg-background border-border">
-                              {reviewInfo.term.name}
+                              {getTermName(reviewInfo.term.name, t)}
                             </span>
                             {reviewInfo.review.review_language && (
                               <span className="px-2 py-1 text-xs rounded-md border bg-background border-border">

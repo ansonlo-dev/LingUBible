@@ -8,7 +8,7 @@ import { CourseService } from '@/services/api/courseService';
 import type { InstructorReviewFromDetails, Instructor } from '@/services/api/courseService';
 import { hasMarkdownFormatting, renderCommentMarkdown } from '@/utils/ui/markdownRenderer';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
-import { getCourseTitle, getInstructorName } from '@/utils/textUtils';
+import { getCourseTitle, getInstructorName, getTermName } from '@/utils/textUtils';
 
 const PREVIEW_COUNT = 3;
 
@@ -199,7 +199,7 @@ export function LatestReviewsPreview() {
                   <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground mt-auto">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className="px-2 py-0.5 rounded-md border bg-background border-border truncate">
-                        {reviewInfo.term.name}
+                        {getTermName(reviewInfo.term.name, t)}
                       </span>
                       {reviewInfo.upvotes > 0 && (
                         <span className="flex items-center gap-1 shrink-0">

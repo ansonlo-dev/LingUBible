@@ -1,5 +1,5 @@
 import { useLanguage } from '@/hooks/useLanguage';
-import { processPluralTranslation, getSessionTypeTranslation } from '@/utils/textUtils';
+import { processPluralTranslation, getSessionTypeTranslation, getTermName } from '@/utils/textUtils';
 import { isCurrentTerm, getCurrentTermCode } from '@/utils/dateUtils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import {
@@ -182,7 +182,8 @@ export function LatestReviewsFilters({
 
   const termFilterOptions = Object.entries(termCounts || {}).map(([termCode, termData]) => ({
     value: termCode,
-    label: termData.name,
+    // fallback 學期（UNKNOWN / *_on_or_before 等）的 name 是原始代碼，交由 getTermName 翻譯
+    label: getTermName(termData.name, t),
     count: termData.count,
     status: isCurrentTerm(termCode) ? 'current' :
            (termCode < getCurrentTermCode() ? 'past' : 'future')
