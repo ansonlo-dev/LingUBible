@@ -1,4 +1,4 @@
-import { tablesDB, functions } from '@/lib/appwrite';
+import { tablesDB, functions, storage } from '@/lib/appwrite';
 import { Query } from 'appwrite';
 import { getCurrentTermCode, setTermDates, compareTermCodesDesc } from '@/utils/dateUtils';
 import { calculateGradeStatistics, calculateGradeDistributionFromReviews, getGPA, isReviewRetryFailGrade } from '@/utils/gradeUtils';
@@ -3048,6 +3048,56 @@ export class CourseService {
     } catch (error) {
       console.error('Error fetching all reviews for browsing:', error);
       throw new Error('Failed to fetch reviews');
+    }
+  }
+
+  /**
+   * 學習資料目錄：掃描 study_materials bucket，由檔名前綴（課程代碼_標題.pdf）
+   * 解析出各課程的資料份數，供課程列表顯示徽章與篩選。
+   * - bucket 僅開放登入用戶讀取——呼叫端需在登入狀態下才呼叫（訪客呼叫必 401）
+   * - 教材由管理員手動上傳、極少變動：雙層被動快取 6 小時（同課程目錄策略），
+   *   即每位登入用戶每 6 小時最多 1-2 個請求（目前 bucket 僅數十檔，一頁即完）
+   */
+  static async getStudyMaterialsCatalog(): Promise<Map<string, number>> {
+    try {
+      const cacheKey = 'study_materials_catalog_v1';
+      // Map 無法 JSON 序列化，快取存 entries 陣列
+      const cached = this.getPersistentCached<[string, number][]>(cacheKey);
+      if (cached) return new Map(cached);
+
+      return await this.runWithInFlightDedup(cacheKey, async () => {
+        const counts = new Map<string, number>();
+        const PAGE_SIZE = 100; // storage.listFiles 每頁上限 100
+        const SAFETY_CAP = 5000;
+        let offset = 0;
+        while (offset < SAFETY_CAP) {
+          const res = await storage.listFiles({
+            bucketId: 'study_materials',
+            queries: [Query.limit(PAGE_SIZE), Query.offset(offset)],
+          });
+          const files = res.files || [];
+          files.forEach((f: { name?: string }) => {
+            // 檔名格式：課程代碼_標題.ext（與課程詳情頁的 startsWith 比對一致）
+            const prefix = (f.name || '').split('_')[0].toUpperCase();
+            if (/^[A-Z]{2,4}\d{3,4}[A-Z0-9]{0,3}$/.test(prefix)) {
+              counts.set(prefix, (counts.get(prefix) || 0) + 1);
+            }
+          });
+          if (files.length < PAGE_SIZE) break;
+          offset += PAGE_SIZE;
+        }
+
+        this.setPersistentCached(
+          cacheKey,
+          [...counts.entries()],
+          10 * 60 * 1000, // 記憶體 10 分鐘
+          PERSISTENT_CACHE_TTL.LANDING_PAGE_DATA // 持久化 6 小時
+        );
+        return counts;
+      });
+    } catch (error) {
+      console.error('Error fetching study materials catalog:', error);
+      return new Map();
     }
   }
 

@@ -46,6 +46,9 @@ interface PopularCourseCardProps {
   onFacultyClick?: (facultyKey: string) => void;
   // 控制是否啟用雙擊模式（目錄頁面使用，主頁不使用）
   enableTwoTapMode?: boolean;
+  // 新增：該課程的學習資料份數（僅登入用戶拿得到目錄；>0 時顯示徽章，
+  // 點擊直達 /courses/CODE/materials 分頁）
+  studyMaterialsCount?: number;
 }
 
 interface PopularInstructorCardProps {
@@ -728,11 +731,30 @@ export const PopularItemCard = (props: PopularItemCardProps) => {
                           )}
                         </div>
                       )}
+                      {/* Study Materials Badge - 點擊直達學習資料分頁 */}
+                      {(props.studyMaterialsCount ?? 0) > 0 && (
+                        <ResponsiveTooltip
+                          content={`${t('pages.courseDetail.studyMaterials')}: ${props.studyMaterialsCount}`}
+                          hasClickAction={true}
+                          showCloseButton={false}
+                        >
+                          <span
+                            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800 shrink-0 cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/40 hover:scale-105 transition-all duration-200"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/courses/${props.code}/materials`);
+                            }}
+                          >
+                            <BookOpen className="h-3 w-3" />
+                            {props.studyMaterialsCount}
+                          </span>
+                        </ResponsiveTooltip>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               {/* 平均GPA */}
               <div className="flex flex-col items-end">
                 <AverageGPADisplay gpa={props.averageGPA} gpaCount={props.averageGPACount} isLoading={courseStatsLoading} />

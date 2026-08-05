@@ -8,6 +8,7 @@ import { AdvancedCourseFilters, CourseFilters } from '@/components/features/revi
 import { Pagination } from '@/components/features/reviews/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useCoursesWithStats } from '@/hooks/useCoursesWithStats';
+import { useAuth } from '@/contexts/AuthContext';
 import { CourseWithStats, CourseService } from '@/services/api/courseService';
 import { BookOpen, Loader2, BookText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -26,8 +27,9 @@ const mapLanguageCode = (courseLanguage?: string): string => {
 
 const Courses = () => {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   // 從 URL 參數初始化篩選器狀態
   const [filters, setFilters] = useState<CourseFilters>(() => {
     const initialFilters: CourseFilters = {
@@ -40,6 +42,7 @@ const Courses = () => {
       offeredTerm: [],
       itemsPerPage: 6,
       currentPage: 1,
+      hasStudyMaterials: false,
     };
 
     // 從 URL 參數讀取篩選器設置
@@ -52,6 +55,7 @@ const Courses = () => {
     const offeredTerm = searchParams.getAll('offeredTerm');
     const itemsPerPage = parseInt(searchParams.get('itemsPerPage') || '6', 10);
     const currentPage = parseInt(searchParams.get('page') || '1', 10);
+    const hasStudyMaterials = searchParams.get('materials') === '1';
 
     return {
       ...initialFilters,
@@ -64,8 +68,24 @@ const Courses = () => {
       offeredTerm,
       itemsPerPage,
       currentPage,
+      hasStudyMaterials,
     };
   });
+
+  // 學習資料目錄（course_code → 份數）。bucket 僅開放登入用戶讀取，
+  // 訪客不發請求；6 小時被動快取，每位登入用戶每 6 小時最多 1-2 個請求
+  const [studyMaterialsCounts, setStudyMaterialsCounts] = useState<Map<string, number>>(new Map());
+  useEffect(() => {
+    if (!user) {
+      setStudyMaterialsCounts(new Map());
+      return;
+    }
+    let cancelled = false;
+    CourseService.getStudyMaterialsCatalog()
+      .then(counts => { if (!cancelled) setStudyMaterialsCounts(counts); })
+      .catch(() => { /* 目錄載入失敗時僅隱藏徽章，不影響頁面 */ });
+    return () => { cancelled = true; };
+  }, [user]);
 
   // 學期篩選結果狀態
   const [termFilteredCourses, setTermFilteredCourses] = useState<Set<string>>(new Set());
@@ -409,6 +429,11 @@ const Courses = () => {
       });
     }
 
+    // 有學習資料篩選（目錄由 storage bucket 掃描取得，訪客無資料時等同不篩選）
+    if (filters.hasStudyMaterials && studyMaterialsCounts.size > 0) {
+      filtered = filtered.filter(course => studyMaterialsCounts.has(course.course_code));
+    }
+
     // 開設學期篩選
     if (filters.offeredTerm.length > 0) {
       filtered = filtered.filter(course => {
@@ -476,7 +501,7 @@ const Courses = () => {
     });
 
     return sortedCourses;
-  }, [courses, debouncedSearchTerm, filters, termFilteredCourses, shouldShowLoadingForTermFilter, instructorDataLoaded, instructorCourseMap]);
+  }, [courses, debouncedSearchTerm, filters, termFilteredCourses, shouldShowLoadingForTermFilter, instructorDataLoaded, instructorCourseMap, studyMaterialsCounts]);
 
   // 計算分頁數據
   const paginationData = useMemo(() => {
@@ -501,7 +526,8 @@ const Courses = () => {
         JSON.stringify(newFilters.serviceLearning) !== JSON.stringify(filters.serviceLearning) ||
         newFilters.sortBy !== filters.sortBy ||
         newFilters.sortOrder !== filters.sortOrder ||
-        JSON.stringify(newFilters.offeredTerm) !== JSON.stringify(filters.offeredTerm)) {
+        JSON.stringify(newFilters.offeredTerm) !== JSON.stringify(filters.offeredTerm) ||
+        newFilters.hasStudyMaterials !== filters.hasStudyMaterials) {
       newFilters.currentPage = 1;
     }
     setFilters(newFilters);
@@ -525,7 +551,8 @@ const Courses = () => {
     }
     if (newFilters.itemsPerPage !== 6) newSearchParams.set('itemsPerPage', newFilters.itemsPerPage.toString());
     if (newFilters.currentPage !== 1) newSearchParams.set('page', newFilters.currentPage.toString());
-    
+    if (newFilters.hasStudyMaterials) newSearchParams.set('materials', '1');
+
     setSearchParams(newSearchParams);
   };
 
@@ -570,6 +597,7 @@ const Courses = () => {
       offeredTerm: [],
       itemsPerPage: 6,
       currentPage: 1,
+      hasStudyMaterials: false,
     });
   };
 
@@ -648,8 +676,26 @@ const Courses = () => {
             totalCourses={courses.length}
             filteredCourses={paginationData.totalItems}
             courses={courses}
+            coursesWithMaterialsCount={user && studyMaterialsCounts.size > 0
+              ? courses.filter(c => studyMaterialsCounts.has(c.course_code)).length
+              : undefined}
           />
         </div>
+
+        {/* 訪客 CTA：學習資料需登入才能查看與下載 */}
+        {!user && (
+          <div className="mt-3 text-center">
+            <p className="text-sm text-muted-foreground">
+              📚 {t('pages.courses.loginForMaterials')}{' '}
+              <a
+                href="/login"
+                className="text-primary hover:underline font-medium"
+              >
+                {t('nav.signIn')}
+              </a>
+            </p>
+          </div>
+        )}
 
         {/* 載入狀態指示器 - 只在學期篩選時阻擋顯示，統計載入不阻擋卡片 */}
         {shouldShowLoadingForTermFilter && (
@@ -720,6 +766,7 @@ const Courses = () => {
                   onTeachingLanguageClick={handleTeachingLanguageClick}
                   onServiceLearningClick={handleServiceLearningClick}
                   enableTwoTapMode={true}
+                  studyMaterialsCount={studyMaterialsCounts.get(course.course_code)}
                 />
                 ))}
               </div>

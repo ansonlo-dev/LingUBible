@@ -86,6 +86,8 @@ export interface CourseFilters {
   offeredTerm: string[];
   itemsPerPage: number;
   currentPage: number;
+  // 只顯示有學習資料的課程（僅登入用戶可用，目錄由 storage bucket 掃描取得）
+  hasStudyMaterials?: boolean;
 }
 
 interface AdvancedCourseFiltersProps {
@@ -96,6 +98,8 @@ interface AdvancedCourseFiltersProps {
   totalCourses?: number;
   filteredCourses?: number;
   courses?: any[]; // Add courses data for count calculation
+  // 有學習資料的課程數（undefined = 訪客/目錄未載入，隱藏切換鈕）
+  coursesWithMaterialsCount?: number;
 }
 
 export function AdvancedCourseFilters({
@@ -105,7 +109,8 @@ export function AdvancedCourseFilters({
   onClearAll,
   totalCourses = 0,
   filteredCourses = 0,
-  courses = []
+  courses = [],
+  coursesWithMaterialsCount
 }: AdvancedCourseFiltersProps) {
   const { t, language } = useLanguage();
   const isMobile = useIsMobile(); // Add mobile detection
@@ -165,7 +170,8 @@ export function AdvancedCourseFilters({
       filters.subjectArea.length > 0 ||
       filters.teachingLanguage.length > 0 ||
       filters.serviceLearning.length > 0 ||
-      filters.offeredTerm.length > 0
+      filters.offeredTerm.length > 0 ||
+      !!filters.hasStudyMaterials
     );
   };
 
@@ -176,6 +182,7 @@ export function AdvancedCourseFilters({
     if (filters.teachingLanguage.length > 0) count++;
     if (filters.serviceLearning.length > 0) count++;
     if (filters.offeredTerm.length > 0) count++;
+    if (filters.hasStudyMaterials) count++;
     return count;
   };
 
@@ -597,6 +604,22 @@ export function AdvancedCourseFilters({
               </Button>
             ))}
           </div>
+          {/* 有學習資料切換鈕（僅登入用戶且目錄非空時顯示） */}
+          {(coursesWithMaterialsCount ?? 0) > 0 && (
+            <Button
+              variant={filters.hasStudyMaterials ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => updateFilters({ hasStudyMaterials: !filters.hasStudyMaterials, currentPage: 1 })}
+              className={`h-6 px-3 text-xs flex items-center gap-1 ${
+                filters.hasStudyMaterials
+                  ? ''
+                  : 'border-0 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/40'
+              }`}
+            >
+              <BookOpen className="h-3 w-3" />
+              {t('filter.hasStudyMaterials')} ({coursesWithMaterialsCount})
+            </Button>
+          )}
         </div>
         
         <div className="flex items-center gap-2 flex-wrap">
