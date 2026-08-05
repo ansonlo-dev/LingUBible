@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useNavigate } from 'react-router-dom';
 import { MessagesSquare, Clock, GraduationCap, ThumbsUp } from 'lucide-react';
@@ -95,27 +95,32 @@ export function LatestReviewsPreview() {
             reviews.map((reviewInfo) => {
               const courseInfo = getCourseTitle(reviewInfo.course, language);
               const comments = reviewInfo.review.course_comments || '';
-              // 講師顯示名：優先用講師資料的多語言名稱，缺少時退回評論裡的原始名字
-              const instructorNames = reviewInfo.instructorDetails
-                .map(detail => {
-                  const instructor = instructorsMap.get(detail.instructor_name);
-                  return instructor ? getInstructorName(instructor, language).primary : detail.instructor_name;
-                })
-                .filter(Boolean);
-              const uniqueInstructorNames = [...new Set(instructorNames)];
+              const courseUrl = `/courses/${reviewInfo.review.course_code}?review_id=${reviewInfo.review.$id}`;
+              // 講師：保留原始名字作為連結 key，顯示名優先用講師資料的多語言名稱
+              const uniqueInstructors: { key: string; display: string }[] = [];
+              const seenInstructors = new Set<string>();
+              reviewInfo.instructorDetails.forEach(detail => {
+                if (!detail.instructor_name || seenInstructors.has(detail.instructor_name)) return;
+                seenInstructors.add(detail.instructor_name);
+                const instructor = instructorsMap.get(detail.instructor_name);
+                uniqueInstructors.push({
+                  key: detail.instructor_name,
+                  display: instructor ? getInstructorName(instructor, language).primary : detail.instructor_name
+                });
+              });
 
               return (
-                <a
+                // 卡片整體點擊 → 課程頁；不能用 <a> 包住，否則內部的講師連結會變成
+                // 無效的巢狀 <a>。講師名是真正的超連結（hover 提示 + 可中鍵/新分頁開啟）。
+                <div
                   key={reviewInfo.review.$id}
-                  href={`/courses/${reviewInfo.review.course_code}?review_id=${reviewInfo.review.$id}`}
-                  onClick={(e) => {
-                    if (e.ctrlKey || e.metaKey || e.button === 1) {
-                      return;
-                    }
-                    e.preventDefault();
-                    navigate(`/courses/${reviewInfo.review.course_code}?review_id=${reviewInfo.review.$id}`);
+                  role="link"
+                  tabIndex={0}
+                  onClick={() => navigate(courseUrl)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') navigate(courseUrl);
                   }}
-                  className="rounded-lg p-4 bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] space-y-3 no-underline text-foreground hover:border-primary/50 hover:shadow-md transition-[border-color,box-shadow] duration-200 flex flex-col"
+                  className="rounded-lg p-4 bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] space-y-3 text-foreground hover:border-primary/50 hover:shadow-md transition-[border-color,box-shadow] duration-200 flex flex-col cursor-pointer"
                 >
                   {/* 用戶 + 成績 */}
                   <div className="flex items-center justify-between gap-2">
@@ -148,10 +153,31 @@ export function LatestReviewsPreview() {
                     {courseInfo.secondary && (
                       <div className="text-sm text-muted-foreground truncate">{courseInfo.secondary}</div>
                     )}
-                    {uniqueInstructorNames.length > 0 && (
+                    {uniqueInstructors.length > 0 && (
                       <div className="flex items-center gap-1.5 text-sm text-muted-foreground min-w-0">
                         <GraduationCap className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{uniqueInstructorNames.join('、')}</span>
+                        <span className="truncate">
+                          {uniqueInstructors.map((instructor, idx) => (
+                            <React.Fragment key={instructor.key}>
+                              {idx > 0 && '、'}
+                              <a
+                                href={`/instructors/${encodeURIComponent(instructor.key)}?review_id=${reviewInfo.review.$id}`}
+                                onClick={(e) => {
+                                  // 阻止冒泡，避免觸發卡片本身的課程頁導航
+                                  e.stopPropagation();
+                                  if (e.ctrlKey || e.metaKey || e.button === 1) {
+                                    return;
+                                  }
+                                  e.preventDefault();
+                                  navigate(`/instructors/${encodeURIComponent(instructor.key)}?review_id=${reviewInfo.review.$id}`);
+                                }}
+                                className="no-underline text-muted-foreground hover:text-primary hover:underline transition-colors"
+                              >
+                                {instructor.display}
+                              </a>
+                            </React.Fragment>
+                          ))}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -187,7 +213,7 @@ export function LatestReviewsPreview() {
                       {formatDateTimeUTC8(reviewInfo.review.submitted_at || reviewInfo.review.$createdAt)}
                     </span>
                   </div>
-                </a>
+                </div>
               );
             })
           )}
