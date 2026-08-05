@@ -1873,7 +1873,7 @@ export default {
   'latestReviews.viewAll': '查看全部',
   'latestReviews.loadMore': '載入更多',
   'latestReviews.totalReviews': '共 {count} 筆評論',
-  'latestReviews.filterHint': '篩選與排序僅套用於已載入的評論，點「載入更多」可納入更多評論',
+  'latestReviews.searchPlaceholder': '課程代碼/名稱、講師/暱稱、評論內容…',
   'latestReviews.noMoreReviews': '已顯示所有評論',
   'latestReviews.noReviews': '暫無評論',
   'latestReviews.noReviewsDescription': '目前還沒有任何評論，成為第一個發表評論的人吧！',

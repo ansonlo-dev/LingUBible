@@ -2916,6 +2916,122 @@ export class CourseService {
   }
 
   /**
+   * 掃描全部 review_votes 並彙總每則評論的讚/倒讚數。
+   * 游標分頁直到讀完（目前資料量一次即可），只選取必要欄位。
+   */
+  private static async getAllReviewVoteStatsScanned(): Promise<Map<string, { upvotes: number; downvotes: number }>> {
+    const stats = new Map<string, { upvotes: number; downvotes: number }>();
+    let cursor: string | undefined;
+    while (true) {
+      const queries = [
+        Query.limit(this.MAX_REVIEWS_LIMIT),
+        Query.select(['$id', 'review_id', 'vote_type'])
+      ];
+      if (cursor) queries.push(Query.cursorAfter(cursor));
+      const response = await tablesDB.listRows(
+        this.DATABASE_ID,
+        this.REVIEW_VOTES_COLLECTION_ID,
+        queries
+      );
+      const rows = response.rows as unknown as ReviewVote[];
+      rows.forEach(vote => {
+        let entry = stats.get(vote.review_id);
+        if (!entry) {
+          entry = { upvotes: 0, downvotes: 0 };
+          stats.set(vote.review_id, entry);
+        }
+        if (vote.vote_type === 'up') entry.upvotes++;
+        else if (vote.vote_type === 'down') entry.downvotes++;
+      });
+      if (rows.length < this.MAX_REVIEWS_LIMIT) break;
+      cursor = rows[rows.length - 1].$id;
+    }
+    return stats;
+  }
+
+  /**
+   * /reviews 瀏覽用完整資料集：全部評論 + 相關課程/講師/學期/投票統計。
+   * 篩選、搜尋、排序、分頁全部在客戶端進行，因此讀取成本固定且極低：
+   * - reviews 全表掃描 1 次（getAllReviewsScanned，3 分鐘共享快取，講師頁後備路徑同源）
+   * - review_votes 全表掃描 1 次
+   * - 課程/講師目錄（6 小時持久化快取，逛過列表頁即為 0 次）
+   * - 學期（all_terms 快取，通常 0 次）
+   * 組裝結果記憶體被動快取 5 分鐘（資料量較大，不寫入 localStorage）；
+   * 發佈/修改/刪除評論後由 clearLatestReviewsCache + clearReviewsScanCache 清除。
+   */
+  static async getAllReviewsForBrowsing(): Promise<{
+    reviews: (InstructorReviewFromDetails & { upvotes: number; downvotes: number })[];
+    instructors: Instructor[];
+    total: number;
+  }> {
+    try {
+      const cacheKey = 'latest_reviews_browse_v1';
+      const cached = this.getCached<{
+        reviews: (InstructorReviewFromDetails & { upvotes: number; downvotes: number })[];
+        instructors: Instructor[];
+        total: number;
+      }>(cacheKey);
+      if (cached) return cached;
+
+      return await this.runWithInFlightDedup(cacheKey, async () => {
+        const [reviews, allCourses, allInstructors, voteStatsMap] = await Promise.all([
+          this.getAllReviewsScanned(),
+          this.getCoursesWithStats(),
+          this.getAllInstructorsWithDetailedStats(),
+          this.getAllReviewVoteStatsScanned(),
+        ]);
+
+        // 解析 instructor_details 並收集講師名字
+        const parsedDetails = new Map<string, InstructorDetail[]>();
+        const instructorNames = new Set<string>();
+        reviews.forEach(review => {
+          const details = this.tryParseInstructorDetails(review.instructor_details) || [];
+          parsedDetails.set(review.$id, details);
+          details.forEach(d => {
+            if (d.instructor_name) instructorNames.add(d.instructor_name);
+          });
+        });
+
+        const uniqueTermCodes = [...new Set(reviews.map(r => r.term_code).filter(Boolean))];
+        const batchTerms = uniqueTermCodes.length > 0 ? await this.getTermsByCodes(uniqueTermCodes) : [];
+
+        const termsByCode = new Map<string, Term>();
+        batchTerms.forEach(term => termsByCode.set(term.term_code, term));
+        const coursesByCode = new Map<string, Course>();
+        allCourses.forEach(course => coursesByCode.set(course.course_code, course));
+
+        const reviewsWithInfo = reviews.map(review => {
+          const term = termsByCode.get(review.term_code);
+          const course = coursesByCode.get(review.course_code);
+          if (!term || !course) return null;
+          const voteStats = voteStatsMap.get(review.$id) || { upvotes: 0, downvotes: 0 };
+          return {
+            review,
+            term,
+            course,
+            instructorDetails: parsedDetails.get(review.$id) || [],
+            upvotes: voteStats.upvotes,
+            downvotes: voteStats.downvotes,
+          };
+        }).filter((info): info is NonNullable<typeof info> => info !== null);
+
+        const result = {
+          reviews: reviewsWithInfo,
+          // 只回傳評論中實際出現的講師，供顯示名與搜尋（含暱稱）使用
+          instructors: allInstructors.filter(i => instructorNames.has(i.name)) as Instructor[],
+          total: reviewsWithInfo.length,
+        };
+
+        this.setCached(cacheKey, result, 5 * 60 * 1000); // 5 分鐘記憶體被動快取
+        return result;
+      });
+    } catch (error) {
+      console.error('Error fetching all reviews for browsing:', error);
+      throw new Error('Failed to fetch reviews');
+    }
+  }
+
+  /**
    * 刪除評論
    */
   static async deleteReview(reviewId: string): Promise<void> {

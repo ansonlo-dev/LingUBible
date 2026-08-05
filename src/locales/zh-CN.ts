@@ -1931,7 +1931,7 @@ export default {
   'latestReviews.viewAll': '查看全部',
   'latestReviews.loadMore': '载入更多',
   'latestReviews.totalReviews': '共 {count} 条评论',
-  'latestReviews.filterHint': '筛选与排序仅套用于已载入的评论，点「载入更多」可纳入更多评论',
+  'latestReviews.searchPlaceholder': '课程代码/名称、讲师/昵称、评论内容…',
   'latestReviews.noMoreReviews': '已显示所有评论',
   'latestReviews.noReviews': '暂无评论',
   'latestReviews.noReviewsDescription': '目前还没有任何评论，成为第一个发表评论的人吧！',

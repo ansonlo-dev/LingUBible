@@ -15,8 +15,10 @@ import {
   User,
   GraduationCap,
   ChevronDown,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { MultiSelectDropdown } from '@/components/ui/multi-select-dropdown';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -26,6 +28,7 @@ import { useState } from 'react';
 // 用於 /reviews 全站最新評論頁。所有選項與計數皆由已載入的評論推導，
 // 純客戶端運算，不產生任何額外資料庫讀取。
 export interface LatestReviewFilters {
+  searchTerm: string;
   selectedCourses: string[];
   selectedInstructors: string[];
   selectedGrades: string[];
@@ -48,8 +51,6 @@ interface LatestReviewsFiltersProps {
   totalReviews: number;
   filteredReviews: number;
   onClearAll: () => void;
-  /** 還有更多評論未載入時的提示（篩選只套用於已載入的評論） */
-  showLoadMoreHint?: boolean;
 }
 
 export function LatestReviewsFilters({
@@ -63,8 +64,7 @@ export function LatestReviewsFilters({
   sessionTypeCounts,
   totalReviews,
   filteredReviews,
-  onClearAll,
-  showLoadMoreHint = false
+  onClearAll
 }: LatestReviewsFiltersProps) {
   const { t, language } = useLanguage();
   const isMobile = useIsMobile();
@@ -75,7 +75,8 @@ export function LatestReviewsFilters({
   };
 
   const hasActiveFilters = () => {
-    return (filters.selectedCourses || []).length > 0 ||
+    return (filters.searchTerm || '').trim() !== '' ||
+           (filters.selectedCourses || []).length > 0 ||
            (filters.selectedInstructors || []).length > 0 ||
            (filters.selectedGrades || []).length > 0 ||
            (filters.selectedTerms || []).length > 0 ||
@@ -85,6 +86,7 @@ export function LatestReviewsFilters({
 
   const getActiveFiltersCount = () => {
     let count = 0;
+    if ((filters.searchTerm || '').trim() !== '') count++;
     if ((filters.selectedCourses || []).length > 0) count++;
     if ((filters.selectedInstructors || []).length > 0) count++;
     if ((filters.selectedGrades || []).length > 0) count++;
@@ -209,6 +211,31 @@ export function LatestReviewsFilters({
 
   return (
     <div className="bg-gradient-to-r from-card to-card/50 rounded-xl p-4 flex flex-col gap-2">
+      {/* 智能搜索行 */}
+      <div className="flex items-center gap-2">
+        <label className={getLabelClassName()}>
+          <Sparkles className="h-4 w-4" />
+          {t('search.smartSearch')}
+        </label>
+        <div className="relative group flex-1">
+          <Input
+            type="text"
+            placeholder={t('latestReviews.searchPlaceholder')}
+            value={filters.searchTerm || ''}
+            onChange={(e) => updateFilters({ searchTerm: e.target.value })}
+            className="pr-10 h-8 text-sm placeholder:text-muted-foreground bg-background/80 hover:border-primary/30 focus:border-primary focus:ring-2 focus:ring-muted rounded-md transition-all duration-300"
+          />
+          {filters.searchTerm && (
+            <button
+              onClick={() => updateFilters({ searchTerm: '' })}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 rounded-full bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* 篩選器行 */}
       <div className="grid grid-cols-1 gap-2 md:gap-0 md:w-full">
         {/* Mobile: Traditional layout */}
@@ -333,9 +360,6 @@ export function LatestReviewsFilters({
             <span>{processPluralTranslation(t('pages.courseDetail.filteredReviewsCount', { count: filteredReviews }), filteredReviews)}</span>
           ) : (
             <span>{processPluralTranslation(t('pages.courseDetail.totalReviewsCount', { count: totalReviews }), totalReviews)}</span>
-          )}
-          {showLoadMoreHint && hasActiveFilters() && (
-            <span className="block text-xs mt-0.5">{t('latestReviews.filterHint')}</span>
           )}
         </div>
 

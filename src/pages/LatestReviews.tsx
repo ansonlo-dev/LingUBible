@@ -23,6 +23,7 @@ import { getGPA } from '@/utils/gradeUtils';
 import { LatestReviewsFilters, LatestReviewFilters } from '@/components/features/reviews/LatestReviewsFilters';
 
 const DEFAULT_FILTERS: LatestReviewFilters = {
+  searchTerm: '',
   selectedCourses: [],
   selectedInstructors: [],
   selectedGrades: [],
@@ -33,8 +34,9 @@ const DEFAULT_FILTERS: LatestReviewFilters = {
   sortOrder: 'desc'
 };
 
-// 與主頁預覽共用同一頁大小，兩處才會命中同一份快取
-const PAGE_SIZE = CourseService.LATEST_REVIEWS_PAGE_SIZE;
+// 每次「載入更多」在畫面上多顯示的評論數（純客戶端，不發請求）
+const DISPLAY_BATCH_SIZE = 20;
+
 
 type LatestReviewInfo = InstructorReviewFromDetails & { upvotes: number; downvotes: number };
 
@@ -45,50 +47,43 @@ const LatestReviews = () => {
   const [reviews, setReviews] = useState<LatestReviewInfo[]>([]);
   const [instructorsMap, setInstructorsMap] = useState<Map<string, Instructor>>(new Map());
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(false);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+  // 畫面上顯示的評論數（「載入更多」只是揭露更多已在客戶端的資料，不發請求）
+  const [displayCount, setDisplayCount] = useState(DISPLAY_BATCH_SIZE);
 
-  // 篩選與排序（純客戶端，僅套用於已載入的評論，不產生額外資料庫讀取）
+  // 篩選、搜尋與排序（純客戶端，套用於全部評論，不產生額外資料庫讀取）
   const [filters, setFilters] = useState<LatestReviewFilters>(DEFAULT_FILTERS);
 
-  const loadReviews = useCallback(async (cursor?: string) => {
+  // 一次取得完整資料集（固定 2-3 個請求、5 分鐘被動快取），
+  // 之後所有互動（篩選/搜尋/排序/載入更多）都是零讀取
+  const loadReviews = useCallback(async () => {
     try {
-      if (cursor) {
-        setLoadingMore(true);
-      } else {
-        setLoading(true);
-        setError(null);
-      }
+      setLoading(true);
+      setError(null);
 
-      const result = await CourseService.getLatestReviews(PAGE_SIZE, cursor);
+      const result = await CourseService.getAllReviewsForBrowsing();
 
-      setReviews(prev => cursor ? [...prev, ...result.reviews] : result.reviews);
-      setInstructorsMap(prev => {
-        const merged = cursor ? new Map(prev) : new Map<string, Instructor>();
-        result.instructors.forEach(instructor => merged.set(instructor.name, instructor));
-        return merged;
-      });
-      setHasMore(result.hasMore);
-      setNextCursor(result.nextCursor);
+      setReviews(result.reviews);
+      setInstructorsMap(new Map(result.instructors.map(instructor => [instructor.name, instructor])));
       setTotal(result.total);
     } catch (err) {
       console.error('Error loading latest reviews:', err);
-      if (!cursor) {
-        setError(t('latestReviews.loadError'));
-      }
+      setError(t('latestReviews.loadError'));
     } finally {
       setLoading(false);
-      setLoadingMore(false);
     }
   }, [t]);
 
   useEffect(() => {
     loadReviews();
   }, [loadReviews]);
+
+  // 篩選條件改變時回到第一批顯示數量
+  useEffect(() => {
+    setDisplayCount(DISPLAY_BATCH_SIZE);
+  }, [filters]);
 
   const getLanguageDisplayName = (reviewLanguage: string) => {
     const languageMap: { [key: string]: string } = {
@@ -176,6 +171,7 @@ const LatestReviews = () => {
   }, [reviews, language]);
 
   const hasActiveFilters =
+    filters.searchTerm.trim() !== '' ||
     filters.selectedCourses.length > 0 ||
     filters.selectedInstructors.length > 0 ||
     filters.selectedGrades.length > 0 ||
@@ -185,9 +181,48 @@ const LatestReviews = () => {
 
   const clearAllFilters = () => setFilters(DEFAULT_FILTERS);
 
-  // 客戶端篩選 + 排序
+  // 智能搜尋索引：每則評論一個可搜尋字串（課程代碼/名稱、講師名/暱稱、
+  // 評論內容、學期名；匿名評論不納入 username，避免以帳號名反查匿名者）
+  const searchIndex = useMemo(() => {
+    const index = new Map<string, string>();
+    reviews.forEach(reviewInfo => {
+      const { review, course, term, instructorDetails } = reviewInfo;
+      const parts: string[] = [
+        review.course_code,
+        course.course_title || '',
+        course.course_title_tc || '',
+        course.course_title_sc || '',
+        term.name,
+        review.course_comments || ''
+      ];
+      instructorDetails.forEach(detail => {
+        parts.push(detail.instructor_name || '');
+        const instructor = instructorsMap.get(detail.instructor_name);
+        if (instructor) {
+          parts.push(instructor.name_tc || '', instructor.name_sc || '', instructor.nickname || '');
+        }
+        parts.push(detail.comments || '', detail.service_learning_description || '');
+      });
+      if (!review.is_anon) {
+        parts.push(review.username || '');
+      }
+      index.set(review.$id, parts.join('\n').toLowerCase());
+    });
+    return index;
+  }, [reviews, instructorsMap]);
+
+  // 客戶端篩選 + 搜尋 + 排序（套用於全部評論）
   const filteredReviews = useMemo(() => {
     let result = reviews;
+
+    // 智能搜尋：以空白分詞，所有關鍵詞都要命中（AND）
+    const tokens = filters.searchTerm.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    if (tokens.length > 0) {
+      result = result.filter(reviewInfo => {
+        const haystack = searchIndex.get(reviewInfo.review.$id) || '';
+        return tokens.every(token => haystack.includes(token));
+      });
+    }
 
     if (filters.selectedCourses.length > 0) {
       result = result.filter(r => filters.selectedCourses.includes(r.review.course_code));
@@ -261,7 +296,14 @@ const LatestReviews = () => {
     }
 
     return sorted;
-  }, [reviews, filters]);
+  }, [reviews, filters, searchIndex]);
+
+  // 實際渲染的評論（客戶端分頁）
+  const displayedReviews = useMemo(
+    () => filteredReviews.slice(0, displayCount),
+    [filteredReviews, displayCount]
+  );
+  const hasMoreToDisplay = displayCount < filteredReviews.length;
 
   const renderSessionTypeBadge = (sessionType: string) => (
     <span
@@ -328,7 +370,6 @@ const LatestReviews = () => {
             totalReviews={reviews.length}
             filteredReviews={filteredReviews.length}
             onClearAll={clearAllFilters}
-            showLoadMoreHint={hasMore}
           />
         </div>
       )}
@@ -349,7 +390,7 @@ const LatestReviews = () => {
               <div className="text-center space-y-4">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto" />
                 <h3 className="text-lg font-medium">{t('common.noResults')}</h3>
-                <p className="text-muted-foreground">{t('latestReviews.filterHint')}</p>
+                <p className="text-muted-foreground">{t('pages.courses.noResultsDesc')}</p>
                 <Button onClick={clearAllFilters} variant="outline" className="mt-2">
                   {t('filter.clearAll')}
                 </Button>
@@ -359,7 +400,7 @@ const LatestReviews = () => {
             <>
               {/* 2 Column Grid Layout */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {filteredReviews.map((reviewInfo) => {
+                {displayedReviews.map((reviewInfo) => {
                   const courseInfo = getCourseTitle(reviewInfo.course, language);
                   const isExpanded = expandedComments[reviewInfo.review.$id];
                   const comments = reviewInfo.review.course_comments || '';
@@ -597,23 +638,15 @@ const LatestReviews = () => {
                 })}
               </div>
 
-              {/* 載入更多 */}
+              {/* 載入更多（純客戶端揭露，不發請求） */}
               <div className="flex justify-center mt-8">
-                {hasMore ? (
+                {hasMoreToDisplay ? (
                   <Button
                     variant="outline"
-                    disabled={loadingMore}
-                    onClick={() => nextCursor && loadReviews(nextCursor)}
+                    onClick={() => setDisplayCount(prev => prev + DISPLAY_BATCH_SIZE)}
                     className="w-full sm:w-auto"
                   >
-                    {loadingMore ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        {t('common.loading')}
-                      </>
-                    ) : (
-                      t('latestReviews.loadMore')
-                    )}
+                    {t('latestReviews.loadMore')}
                   </Button>
                 ) : (
                   <p className="text-sm text-muted-foreground">{t('latestReviews.noMoreReviews')}</p>

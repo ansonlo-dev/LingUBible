@@ -2019,7 +2019,7 @@ export default {
   'latestReviews.viewAll': 'View All',
   'latestReviews.loadMore': 'Load More',
   'latestReviews.totalReviews': '{count} reviews in total',
-  'latestReviews.filterHint': 'Filters and sorting apply to loaded reviews only — click "Load More" to include more',
+  'latestReviews.searchPlaceholder': 'Course code/title, instructor/nickname, review content…',
   'latestReviews.noMoreReviews': 'All reviews loaded',
   'latestReviews.noReviews': 'No Reviews Yet',
   'latestReviews.noReviewsDescription': 'There are no reviews yet. Be the first to write one!',
