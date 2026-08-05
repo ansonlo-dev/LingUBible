@@ -2742,6 +2742,11 @@ export class CourseService {
   /** /reviews 頁與主頁預覽共用的頁大小 — 兩處用同一值才能命中同一份快取 */
   static readonly LATEST_REVIEWS_PAGE_SIZE = 20;
 
+  /** 快取 key（帶版本號：回傳形狀改變時遞增版本，避免讀到舊形狀的 localStorage 資料） */
+  private static latestReviewsCacheKey(limit: number): string {
+    return `latest_reviews_v2_${limit}`;
+  }
+
   /**
    * 清除最新評論快取（記憶體 + 持久化）。發佈／修改／刪除評論後呼叫，
    * 讓用戶立即在 /reviews 與主頁預覽看到自己的變更。
@@ -2754,7 +2759,7 @@ export class CourseService {
       }
     }
     // 整頁重新載入後記憶體 map 是空的，但 localStorage 仍在 — 預設頁大小的 key 固定刪一次
-    persistentCache.delete(`latest_reviews_${this.LATEST_REVIEWS_PAGE_SIZE}`);
+    persistentCache.delete(this.latestReviewsCacheKey(this.LATEST_REVIEWS_PAGE_SIZE));
   }
 
   /**
@@ -2770,16 +2775,18 @@ export class CourseService {
     instructors: Instructor[];
     hasMore: boolean;
     nextCursor: string | null;
+    total: number;
   }> {
     try {
       // 只有第一頁（無游標）走快取；後續頁面按需載入
-      const cacheKey = `latest_reviews_${limit}`;
+      const cacheKey = this.latestReviewsCacheKey(limit);
       if (!cursor) {
         const cached = this.getPersistentCached<{
           reviews: (InstructorReviewFromDetails & { upvotes: number; downvotes: number })[];
           instructors: Instructor[];
           hasMore: boolean;
           nextCursor: string | null;
+          total: number;
         }>(cacheKey);
         if (cached) return cached;
       }
@@ -2807,11 +2814,13 @@ export class CourseService {
       );
 
       const rows = response.rows as unknown as Review[];
+      // total 由同一個 listRows 回應取得，不需要額外請求
+      const total = response.total;
       const hasMore = rows.length > limit;
       const reviews = hasMore ? rows.slice(0, limit) : rows;
 
       if (reviews.length === 0) {
-        return { reviews: [], instructors: [] as Instructor[], hasMore: false, nextCursor: null };
+        return { reviews: [], instructors: [] as Instructor[], hasMore: false, nextCursor: null, total };
       }
 
       // 先解析 instructor_details，一併收集講師名字供批次查詢
@@ -2889,6 +2898,7 @@ export class CourseService {
         hasMore,
         // 游標必須指向原始回傳的最後一筆（含被 term/course 過濾掉的），否則會跳過資料
         nextCursor: hasMore ? reviews[reviews.length - 1].$id : null,
+        total,
       };
 
       if (!cursor) {

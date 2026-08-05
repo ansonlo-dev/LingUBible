@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -7,9 +7,19 @@ import {
   AlertCircle,
   ThumbsUp,
   ThumbsDown,
-  Clock
+  Clock,
+  Search,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { StarRating } from '@/components/ui/star-rating';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
@@ -19,6 +29,11 @@ import type { InstructorReviewFromDetails, Instructor } from '@/services/api/cou
 import { hasMarkdownFormatting, renderCommentMarkdown } from '@/utils/ui/markdownRenderer';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { getInstructorName, getCourseTitle } from '@/utils/textUtils';
+import { getGPA } from '@/utils/gradeUtils';
+
+type SortOption = 'newest' | 'oldest' | 'mostUpvoted' | 'gradeDesc' | 'gradeAsc';
+
+const REVIEW_LANGUAGES = ['en', 'zh-TW', 'zh-CN'] as const;
 
 // 與主頁預覽共用同一頁大小，兩處才會命中同一份快取
 const PAGE_SIZE = CourseService.LATEST_REVIEWS_PAGE_SIZE;
@@ -36,7 +51,14 @@ const LatestReviews = () => {
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+
+  // 篩選與排序（純客戶端，僅套用於已載入的評論，不產生額外資料庫讀取）
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [selectedTermCode, setSelectedTermCode] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
 
   const loadReviews = useCallback(async (cursor?: string) => {
     try {
@@ -57,6 +79,7 @@ const LatestReviews = () => {
       });
       setHasMore(result.hasMore);
       setNextCursor(result.nextCursor);
+      setTotal(result.total);
     } catch (err) {
       console.error('Error loading latest reviews:', err);
       if (!cursor) {
@@ -81,6 +104,107 @@ const LatestReviews = () => {
     return languageMap[reviewLanguage] || reviewLanguage;
   };
 
+  // 學期選項：由已載入評論推導（不需額外查詢），依學期代碼由新至舊排列
+  const termOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    reviews.forEach(r => {
+      if (!map.has(r.term.term_code)) map.set(r.term.term_code, r.term.name);
+    });
+    return [...map.entries()]
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .map(([code, name]) => ({ code, name }));
+  }, [reviews]);
+
+  // 各語言在已載入評論中的數量（顯示於語言 chips）
+  const languageCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    reviews.forEach(r => {
+      const lang = r.review.review_language || 'en';
+      counts[lang] = (counts[lang] || 0) + 1;
+    });
+    return counts;
+  }, [reviews]);
+
+  const hasActiveFilters = searchTerm.trim() !== '' || selectedLanguages.length > 0 || selectedTermCode !== 'all' || sortBy !== 'newest';
+
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setSelectedLanguages([]);
+    setSelectedTermCode('all');
+    setSortBy('newest');
+  };
+
+  const toggleLanguage = (lang: string) => {
+    setSelectedLanguages(prev =>
+      prev.includes(lang) ? prev.filter(l => l !== lang) : [...prev, lang]
+    );
+  };
+
+  // 客戶端篩選 + 排序
+  const filteredReviews = useMemo(() => {
+    let result = reviews;
+
+    const search = searchTerm.trim().toLowerCase();
+    if (search) {
+      result = result.filter(reviewInfo => {
+        const { review, course, instructorDetails } = reviewInfo;
+        if (review.course_code.toLowerCase().includes(search)) return true;
+        if ((course.course_title || '').toLowerCase().includes(search)) return true;
+        if ((course.course_title_tc || '').toLowerCase().includes(search)) return true;
+        if ((course.course_title_sc || '').toLowerCase().includes(search)) return true;
+        return instructorDetails.some(detail => {
+          if (detail.instructor_name.toLowerCase().includes(search)) return true;
+          const instructor = instructorsMap.get(detail.instructor_name);
+          return instructor
+            ? (instructor.name_tc || '').toLowerCase().includes(search) ||
+              (instructor.name_sc || '').toLowerCase().includes(search)
+            : false;
+        });
+      });
+    }
+
+    if (selectedLanguages.length > 0) {
+      result = result.filter(reviewInfo =>
+        selectedLanguages.includes(reviewInfo.review.review_language || 'en')
+      );
+    }
+
+    if (selectedTermCode !== 'all') {
+      result = result.filter(reviewInfo => reviewInfo.term.term_code === selectedTermCode);
+    }
+
+    const byDateDesc = (a: LatestReviewInfo, b: LatestReviewInfo) =>
+      new Date(b.review.$createdAt).getTime() - new Date(a.review.$createdAt).getTime();
+
+    const sorted = [...result];
+    switch (sortBy) {
+      case 'oldest':
+        sorted.sort((a, b) => -byDateDesc(a, b));
+        break;
+      case 'mostUpvoted':
+        sorted.sort((a, b) => (b.upvotes - a.upvotes) || byDateDesc(a, b));
+        break;
+      case 'gradeDesc':
+      case 'gradeAsc': {
+        const direction = sortBy === 'gradeDesc' ? -1 : 1;
+        sorted.sort((a, b) => {
+          const gpaA = getGPA(a.review.course_final_grade);
+          const gpaB = getGPA(b.review.course_final_grade);
+          // 無成績（N/A）一律排最後
+          if (gpaA === null && gpaB === null) return byDateDesc(a, b);
+          if (gpaA === null) return 1;
+          if (gpaB === null) return -1;
+          return direction * (gpaA - gpaB) || byDateDesc(a, b);
+        });
+        break;
+      }
+      default:
+        sorted.sort(byDateDesc);
+    }
+
+    return sorted;
+  }, [reviews, searchTerm, selectedLanguages, selectedTermCode, sortBy, instructorsMap]);
+
   const renderSessionTypeBadge = (sessionType: string) => (
     <span
       className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs shrink-0 ${
@@ -99,7 +223,14 @@ const LatestReviews = () => {
     <div className="mx-auto px-4 lg:px-8 xl:px-16 py-8">
       {/* Header */}
       <div className="space-y-2 mb-6">
-        <h1 className="text-3xl font-bold">{t('latestReviews.title')}</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-3xl font-bold">{t('latestReviews.title')}</h1>
+          {total > 0 && (
+            <span className="px-2.5 py-1 text-sm rounded-full bg-primary/10 text-primary font-medium">
+              {t('latestReviews.totalReviews', { count: total })}
+            </span>
+          )}
+        </div>
         <p className="text-muted-foreground">{t('latestReviews.subtitle')}</p>
       </div>
 
@@ -124,6 +255,95 @@ const LatestReviews = () => {
         </div>
       )}
 
+      {/* Filters & Sort - 純客戶端，僅套用於已載入的評論 */}
+      {!loading && !error && reviews.length > 0 && (
+        <div className="rounded-lg p-4 mb-6 bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] space-y-3">
+          <div className="flex flex-col md:flex-row gap-3">
+            {/* 搜尋 */}
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={t('latestReviews.searchPlaceholder')}
+                className="pl-9 pr-8"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {/* 學期 */}
+            <Select value={selectedTermCode} onValueChange={setSelectedTermCode}>
+              <SelectTrigger className="w-full md:w-44 shrink-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('filter.all')}</SelectItem>
+                {termOptions.map(term => (
+                  <SelectItem key={term.code} value={term.code}>{term.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {/* 排序 */}
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+              <SelectTrigger className="w-full md:w-44 shrink-0">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">{t('latestReviews.sort.newest')}</SelectItem>
+                <SelectItem value="oldest">{t('latestReviews.sort.oldest')}</SelectItem>
+                <SelectItem value="mostUpvoted">{t('latestReviews.sort.mostUpvoted')}</SelectItem>
+                <SelectItem value="gradeDesc">{t('latestReviews.sort.gradeDesc')}</SelectItem>
+                <SelectItem value="gradeAsc">{t('latestReviews.sort.gradeAsc')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {/* 語言 chips + 清除 */}
+          <div className="flex flex-wrap items-center gap-2">
+            {REVIEW_LANGUAGES.map(lang => {
+              const isSelected = selectedLanguages.includes(lang);
+              const count = languageCounts[lang] || 0;
+              return (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => toggleLanguage(lang)}
+                  className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                    isSelected
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
+                  }`}
+                >
+                  {getLanguageDisplayName(lang)}{count > 0 ? ` (${count})` : ''}
+                </button>
+              );
+            })}
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearAllFilters}
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground ml-auto"
+              >
+                <X className="h-3.5 w-3.5 mr-1" />
+                {t('filter.clearAll')}
+              </Button>
+            )}
+          </div>
+          {/* 統計 + 提示 */}
+          <div className="text-xs text-muted-foreground space-y-0.5">
+            <p>{t('latestReviews.matchedCount', { filtered: filteredReviews.length, loaded: reviews.length })}</p>
+            {hasActiveFilters && hasMore && <p>{t('latestReviews.filterHint')}</p>}
+          </div>
+        </div>
+      )}
+
       {/* Reviews List */}
       {!loading && !error && (
         <>
@@ -135,11 +355,22 @@ const LatestReviews = () => {
                 <p className="text-muted-foreground">{t('latestReviews.noReviewsDescription')}</p>
               </div>
             </div>
+          ) : filteredReviews.length === 0 ? (
+            <div className="rounded-lg p-12 bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441]">
+              <div className="text-center space-y-4">
+                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto" />
+                <h3 className="text-lg font-medium">{t('common.noResults')}</h3>
+                <p className="text-muted-foreground">{t('latestReviews.filterHint')}</p>
+                <Button onClick={clearAllFilters} variant="outline" className="mt-2">
+                  {t('filter.clearAll')}
+                </Button>
+              </div>
+            </div>
           ) : (
             <>
               {/* 2 Column Grid Layout */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {reviews.map((reviewInfo) => {
+                {filteredReviews.map((reviewInfo) => {
                   const courseInfo = getCourseTitle(reviewInfo.course, language);
                   const isExpanded = expandedComments[reviewInfo.review.$id];
                   const comments = reviewInfo.review.course_comments || '';

@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useNavigate } from 'react-router-dom';
-import { MessagesSquare, Clock } from 'lucide-react';
+import { MessagesSquare, Clock, GraduationCap, ThumbsUp } from 'lucide-react';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { CourseService } from '@/services/api/courseService';
-import type { InstructorReviewFromDetails } from '@/services/api/courseService';
+import type { InstructorReviewFromDetails, Instructor } from '@/services/api/courseService';
 import { hasMarkdownFormatting, renderCommentMarkdown } from '@/utils/ui/markdownRenderer';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
-import { getCourseTitle } from '@/utils/textUtils';
+import { getCourseTitle, getInstructorName } from '@/utils/textUtils';
 
 const PREVIEW_COUNT = 3;
 
@@ -24,6 +24,7 @@ export function LatestReviewsPreview() {
   const navigate = useNavigate();
 
   const [reviews, setReviews] = useState<LatestReviewInfo[]>([]);
+  const [instructorsMap, setInstructorsMap] = useState<Map<string, Instructor>>(new Map());
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
 
@@ -32,7 +33,10 @@ export function LatestReviewsPreview() {
     const load = async () => {
       try {
         const result = await CourseService.getLatestReviews(CourseService.LATEST_REVIEWS_PAGE_SIZE);
-        if (!cancelled) setReviews(result.reviews.slice(0, PREVIEW_COUNT));
+        if (!cancelled) {
+          setReviews(result.reviews.slice(0, PREVIEW_COUNT));
+          setInstructorsMap(new Map(result.instructors.map(instructor => [instructor.name, instructor])));
+        }
       } catch (error) {
         console.error('Error loading latest reviews preview:', error);
         if (!cancelled) setFailed(true);
@@ -91,6 +95,14 @@ export function LatestReviewsPreview() {
             reviews.map((reviewInfo) => {
               const courseInfo = getCourseTitle(reviewInfo.course, language);
               const comments = reviewInfo.review.course_comments || '';
+              // 講師顯示名：優先用講師資料的多語言名稱，缺少時退回評論裡的原始名字
+              const instructorNames = reviewInfo.instructorDetails
+                .map(detail => {
+                  const instructor = instructorsMap.get(detail.instructor_name);
+                  return instructor ? getInstructorName(instructor, language).primary : detail.instructor_name;
+                })
+                .filter(Boolean);
+              const uniqueInstructorNames = [...new Set(instructorNames)];
 
               return (
                 <a
@@ -129,10 +141,19 @@ export function LatestReviewsPreview() {
                     )}
                   </div>
 
-                  {/* 課程 */}
-                  <div className="min-w-0">
+                  {/* 課程名稱 + 講師名 */}
+                  <div className="min-w-0 space-y-1">
                     <div className="font-bold text-primary">{reviewInfo.review.course_code}</div>
                     <div className="text-sm text-muted-foreground truncate">{courseInfo.primary}</div>
+                    {courseInfo.secondary && (
+                      <div className="text-sm text-muted-foreground truncate">{courseInfo.secondary}</div>
+                    )}
+                    {uniqueInstructorNames.length > 0 && (
+                      <div className="flex items-center gap-1.5 text-sm text-muted-foreground min-w-0">
+                        <GraduationCap className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{uniqueInstructorNames.join('、')}</span>
+                      </div>
+                    )}
                   </div>
 
                   {/* 評論摘要 */}
@@ -148,11 +169,19 @@ export function LatestReviewsPreview() {
                     </div>
                   )}
 
-                  {/* 學期 + 時間 */}
+                  {/* 學期 + 讚數 + 時間 */}
                   <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground mt-auto">
-                    <span className="px-2 py-0.5 rounded-md border bg-background border-border truncate">
-                      {reviewInfo.term.name}
-                    </span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="px-2 py-0.5 rounded-md border bg-background border-border truncate">
+                        {reviewInfo.term.name}
+                      </span>
+                      {reviewInfo.upvotes > 0 && (
+                        <span className="flex items-center gap-1 shrink-0">
+                          <ThumbsUp className="h-3.5 w-3.5" />
+                          {reviewInfo.upvotes}
+                        </span>
+                      )}
+                    </div>
                     <span className="flex items-center gap-1 shrink-0">
                       <Clock className="h-3.5 w-3.5" />
                       {formatDateTimeUTC8(reviewInfo.review.submitted_at || reviewInfo.review.$createdAt)}
