@@ -7,8 +7,10 @@ import { useSyncExternalStore } from 'react';
 //  - 'hidden'    : banner removed; a capsule in the footer brings it back
 export type BetaNoticeState = 'expanded' | 'collapsed' | 'hidden';
 
-const STATE_KEY = 'betaNoticeState';
-const LEGACY_EXPANDED_KEY = 'betaNoticeExpanded';
+// v2：預設改為 'hidden'（新舊訪客都不再預設顯示 banner）。改用新 key，
+// 舊 key 儲存的 'expanded'/'collapsed' 一律忽略——只有在本次改版後透過
+// footer 膠囊主動打開的用戶（寫入 v2 key）才會再看到 banner。
+const STATE_KEY = 'betaNoticeStateV2';
 const CHANGE_EVENT = 'beta-notice-state-change';
 
 export const readBetaNoticeState = (): BetaNoticeState => {
@@ -17,14 +19,10 @@ export const readBetaNoticeState = (): BetaNoticeState => {
     if (stored === 'expanded' || stored === 'collapsed' || stored === 'hidden') {
       return stored;
     }
-    // Migrate from the old boolean-style key.
-    if (localStorage.getItem(LEGACY_EXPANDED_KEY) === 'false') {
-      return 'collapsed';
-    }
   } catch {
     // Ignore storage errors (e.g. private mode)
   }
-  return 'expanded';
+  return 'hidden';
 };
 
 export const setBetaNoticeState = (next: BetaNoticeState) => {
@@ -48,4 +46,4 @@ const subscribe = (callback: () => void) => {
 };
 
 export const useBetaNoticeState = (): BetaNoticeState =>
-  useSyncExternalStore(subscribe, readBetaNoticeState, () => 'expanded');
+  useSyncExternalStore(subscribe, readBetaNoticeState, () => 'hidden');

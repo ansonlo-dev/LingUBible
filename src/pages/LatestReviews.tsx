@@ -7,19 +7,9 @@ import {
   AlertCircle,
   ThumbsUp,
   ThumbsDown,
-  Clock,
-  Search,
-  X
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { StarRating } from '@/components/ui/star-rating';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
@@ -30,10 +20,18 @@ import { hasMarkdownFormatting, renderCommentMarkdown } from '@/utils/ui/markdow
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { getInstructorName, getCourseTitle } from '@/utils/textUtils';
 import { getGPA } from '@/utils/gradeUtils';
+import { LatestReviewsFilters, LatestReviewFilters } from '@/components/features/reviews/LatestReviewsFilters';
 
-type SortOption = 'newest' | 'oldest' | 'mostUpvoted' | 'gradeDesc' | 'gradeAsc';
-
-const REVIEW_LANGUAGES = ['en', 'zh-TW', 'zh-CN'] as const;
+const DEFAULT_FILTERS: LatestReviewFilters = {
+  selectedCourses: [],
+  selectedInstructors: [],
+  selectedGrades: [],
+  selectedTerms: [],
+  selectedLanguages: [],
+  selectedSessionTypes: [],
+  sortBy: 'postDate',
+  sortOrder: 'desc'
+};
 
 // 與主頁預覽共用同一頁大小，兩處才會命中同一份快取
 const PAGE_SIZE = CourseService.LATEST_REVIEWS_PAGE_SIZE;
@@ -55,10 +53,7 @@ const LatestReviews = () => {
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
 
   // 篩選與排序（純客戶端，僅套用於已載入的評論，不產生額外資料庫讀取）
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
-  const [selectedTermCode, setSelectedTermCode] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [filters, setFilters] = useState<LatestReviewFilters>(DEFAULT_FILTERS);
 
   const loadReviews = useCallback(async (cursor?: string) => {
     try {
@@ -104,92 +99,150 @@ const LatestReviews = () => {
     return languageMap[reviewLanguage] || reviewLanguage;
   };
 
-  // 學期選項：由已載入評論推導（不需額外查詢），依學期代碼由新至舊排列
-  const termOptions = useMemo(() => {
-    const map = new Map<string, string>();
-    reviews.forEach(r => {
-      if (!map.has(r.term.term_code)) map.set(r.term.term_code, r.term.name);
+  // 正規化成績值（'-1' 舊資料視為 N/A）
+  const normalizeGrade = (grade: string) => (!grade || grade === '-1') ? 'N/A' : grade;
+
+  // 所有篩選選項與計數皆由已載入的評論推導（不需額外查詢）
+  const filterCounts = useMemo(() => {
+    const courseCounts: { [key: string]: { label: string; count: number } } = {};
+    const instructorCounts: { [key: string]: number } = {};
+    const gradeCounts: { [key: string]: number } = {};
+    const termCounts: { [key: string]: { name: string; count: number } } = {};
+    const languageCounts: { [key: string]: number } = {};
+    const sessionTypeCounts: { [key: string]: number } = {};
+
+    reviews.forEach(reviewInfo => {
+      const { review, course, term, instructorDetails } = reviewInfo;
+
+      const courseLabel = `${review.course_code} - ${getCourseTitle(course, language).primary}`;
+      if (!courseCounts[review.course_code]) {
+        courseCounts[review.course_code] = { label: courseLabel, count: 0 };
+      }
+      courseCounts[review.course_code].count++;
+
+      const seenInstructors = new Set<string>();
+      const seenSessionTypes = new Set<string>();
+      instructorDetails.forEach(detail => {
+        if (detail.instructor_name && !seenInstructors.has(detail.instructor_name)) {
+          seenInstructors.add(detail.instructor_name);
+          instructorCounts[detail.instructor_name] = (instructorCounts[detail.instructor_name] || 0) + 1;
+        }
+        if (detail.session_type && !seenSessionTypes.has(detail.session_type)) {
+          seenSessionTypes.add(detail.session_type);
+          sessionTypeCounts[detail.session_type] = (sessionTypeCounts[detail.session_type] || 0) + 1;
+        }
+      });
+
+      const grade = normalizeGrade(review.course_final_grade);
+      gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
+
+      if (!termCounts[term.term_code]) {
+        termCounts[term.term_code] = { name: term.name, count: 0 };
+      }
+      termCounts[term.term_code].count++;
+
+      const lang = review.review_language || 'en';
+      languageCounts[lang] = (languageCounts[lang] || 0) + 1;
     });
-    return [...map.entries()]
-      .sort((a, b) => b[0].localeCompare(a[0]))
-      .map(([code, name]) => ({ code, name }));
-  }, [reviews]);
 
-  // 各語言在已載入評論中的數量（顯示於語言 chips）
-  const languageCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    reviews.forEach(r => {
-      const lang = r.review.review_language || 'en';
-      counts[lang] = (counts[lang] || 0) + 1;
-    });
-    return counts;
-  }, [reviews]);
-
-  const hasActiveFilters = searchTerm.trim() !== '' || selectedLanguages.length > 0 || selectedTermCode !== 'all' || sortBy !== 'newest';
-
-  const clearAllFilters = () => {
-    setSearchTerm('');
-    setSelectedLanguages([]);
-    setSelectedTermCode('all');
-    setSortBy('newest');
-  };
-
-  const toggleLanguage = (lang: string) => {
-    setSelectedLanguages(prev =>
-      prev.includes(lang) ? prev.filter(l => l !== lang) : [...prev, lang]
+    // 課程按代碼排序、成績由高至低（N/A 最後）、學期由新至舊
+    const sortedCourseCounts = Object.fromEntries(
+      Object.entries(courseCounts).sort((a, b) => a[0].localeCompare(b[0]))
     );
-  };
+    const sortedGradeCounts = Object.fromEntries(
+      Object.entries(gradeCounts).sort((a, b) => {
+        const gpaA = getGPA(a[0]);
+        const gpaB = getGPA(b[0]);
+        if (gpaA === null) return 1;
+        if (gpaB === null) return -1;
+        return gpaB - gpaA;
+      })
+    );
+    const sortedTermCounts = Object.fromEntries(
+      Object.entries(termCounts).sort((a, b) => b[0].localeCompare(a[0]))
+    );
+    const sortedInstructorCounts = Object.fromEntries(
+      Object.entries(instructorCounts).sort((a, b) => a[0].localeCompare(b[0]))
+    );
+
+    return {
+      courseCounts: sortedCourseCounts,
+      instructorCounts: sortedInstructorCounts,
+      gradeCounts: sortedGradeCounts,
+      termCounts: sortedTermCounts,
+      languageCounts,
+      sessionTypeCounts
+    };
+  }, [reviews, language]);
+
+  const hasActiveFilters =
+    filters.selectedCourses.length > 0 ||
+    filters.selectedInstructors.length > 0 ||
+    filters.selectedGrades.length > 0 ||
+    filters.selectedTerms.length > 0 ||
+    filters.selectedLanguages.length > 0 ||
+    filters.selectedSessionTypes.length > 0;
+
+  const clearAllFilters = () => setFilters(DEFAULT_FILTERS);
 
   // 客戶端篩選 + 排序
   const filteredReviews = useMemo(() => {
     let result = reviews;
 
-    const search = searchTerm.trim().toLowerCase();
-    if (search) {
-      result = result.filter(reviewInfo => {
-        const { review, course, instructorDetails } = reviewInfo;
-        if (review.course_code.toLowerCase().includes(search)) return true;
-        if ((course.course_title || '').toLowerCase().includes(search)) return true;
-        if ((course.course_title_tc || '').toLowerCase().includes(search)) return true;
-        if ((course.course_title_sc || '').toLowerCase().includes(search)) return true;
-        return instructorDetails.some(detail => {
-          if (detail.instructor_name.toLowerCase().includes(search)) return true;
-          const instructor = instructorsMap.get(detail.instructor_name);
-          return instructor
-            ? (instructor.name_tc || '').toLowerCase().includes(search) ||
-              (instructor.name_sc || '').toLowerCase().includes(search)
-            : false;
-        });
-      });
+    if (filters.selectedCourses.length > 0) {
+      result = result.filter(r => filters.selectedCourses.includes(r.review.course_code));
     }
-
-    if (selectedLanguages.length > 0) {
-      result = result.filter(reviewInfo =>
-        selectedLanguages.includes(reviewInfo.review.review_language || 'en')
+    if (filters.selectedInstructors.length > 0) {
+      result = result.filter(r =>
+        r.instructorDetails.some(d => filters.selectedInstructors.includes(d.instructor_name))
       );
     }
-
-    if (selectedTermCode !== 'all') {
-      result = result.filter(reviewInfo => reviewInfo.term.term_code === selectedTermCode);
+    if (filters.selectedGrades.length > 0) {
+      result = result.filter(r => filters.selectedGrades.includes(normalizeGrade(r.review.course_final_grade)));
+    }
+    if (filters.selectedTerms.length > 0) {
+      result = result.filter(r => filters.selectedTerms.includes(r.term.term_code));
+    }
+    if (filters.selectedLanguages.length > 0) {
+      result = result.filter(r => filters.selectedLanguages.includes(r.review.review_language || 'en'));
+    }
+    if (filters.selectedSessionTypes.length > 0) {
+      result = result.filter(r =>
+        r.instructorDetails.some(d => filters.selectedSessionTypes.includes(d.session_type))
+      );
     }
 
     const byDateDesc = (a: LatestReviewInfo, b: LatestReviewInfo) =>
       new Date(b.review.$createdAt).getTime() - new Date(a.review.$createdAt).getTime();
+    const direction = filters.sortOrder === 'asc' ? 1 : -1;
+    // 課程評分欄位：null / -1（N/A）一律排最後，不論排序方向
+    const byRatingField = (field: 'course_workload' | 'course_difficulties' | 'course_usefulness') =>
+      (a: LatestReviewInfo, b: LatestReviewInfo) => {
+        const valA = a.review[field];
+        const valB = b.review[field];
+        const naA = valA === null || valA === -1;
+        const naB = valB === null || valB === -1;
+        if (naA && naB) return byDateDesc(a, b);
+        if (naA) return 1;
+        if (naB) return -1;
+        return direction * (valA - valB) || byDateDesc(a, b);
+      };
 
     const sorted = [...result];
-    switch (sortBy) {
-      case 'oldest':
-        sorted.sort((a, b) => -byDateDesc(a, b));
+    switch (filters.sortBy) {
+      case 'workload':
+        sorted.sort(byRatingField('course_workload'));
         break;
-      case 'mostUpvoted':
-        sorted.sort((a, b) => (b.upvotes - a.upvotes) || byDateDesc(a, b));
+      case 'difficulty':
+        sorted.sort(byRatingField('course_difficulties'));
         break;
-      case 'gradeDesc':
-      case 'gradeAsc': {
-        const direction = sortBy === 'gradeDesc' ? -1 : 1;
+      case 'usefulness':
+        sorted.sort(byRatingField('course_usefulness'));
+        break;
+      case 'grade':
         sorted.sort((a, b) => {
-          const gpaA = getGPA(a.review.course_final_grade);
-          const gpaB = getGPA(b.review.course_final_grade);
+          const gpaA = getGPA(normalizeGrade(a.review.course_final_grade));
+          const gpaB = getGPA(normalizeGrade(b.review.course_final_grade));
           // 無成績（N/A）一律排最後
           if (gpaA === null && gpaB === null) return byDateDesc(a, b);
           if (gpaA === null) return 1;
@@ -197,13 +250,18 @@ const LatestReviews = () => {
           return direction * (gpaA - gpaB) || byDateDesc(a, b);
         });
         break;
-      }
-      default:
-        sorted.sort(byDateDesc);
+      case 'upvotes':
+        sorted.sort((a, b) => direction * (a.upvotes - b.upvotes) || byDateDesc(a, b));
+        break;
+      case 'downvotes':
+        sorted.sort((a, b) => direction * (a.downvotes - b.downvotes) || byDateDesc(a, b));
+        break;
+      default: // postDate
+        sorted.sort((a, b) => direction * -byDateDesc(a, b));
     }
 
     return sorted;
-  }, [reviews, searchTerm, selectedLanguages, selectedTermCode, sortBy, instructorsMap]);
+  }, [reviews, filters]);
 
   const renderSessionTypeBadge = (sessionType: string) => (
     <span
@@ -255,92 +313,23 @@ const LatestReviews = () => {
         </div>
       )}
 
-      {/* Filters & Sort - 純客戶端，僅套用於已載入的評論 */}
+      {/* Filters & Sort - 與課程頁 reviews tab 同風格；純客戶端，僅套用於已載入的評論 */}
       {!loading && !error && reviews.length > 0 && (
-        <div className="rounded-lg p-4 mb-6 bg-card border border-border dark:bg-[#202936] dark:border-[#2a3441] space-y-3">
-          <div className="flex flex-col md:flex-row gap-3">
-            {/* 搜尋 */}
-            <div className="relative flex-1 min-w-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder={t('latestReviews.searchPlaceholder')}
-                className="pl-9 pr-8"
-              />
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-            {/* 學期 */}
-            <Select value={selectedTermCode} onValueChange={setSelectedTermCode}>
-              <SelectTrigger className="w-full md:w-44 shrink-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('filter.all')}</SelectItem>
-                {termOptions.map(term => (
-                  <SelectItem key={term.code} value={term.code}>{term.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {/* 排序 */}
-            <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-              <SelectTrigger className="w-full md:w-44 shrink-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">{t('latestReviews.sort.newest')}</SelectItem>
-                <SelectItem value="oldest">{t('latestReviews.sort.oldest')}</SelectItem>
-                <SelectItem value="mostUpvoted">{t('latestReviews.sort.mostUpvoted')}</SelectItem>
-                <SelectItem value="gradeDesc">{t('latestReviews.sort.gradeDesc')}</SelectItem>
-                <SelectItem value="gradeAsc">{t('latestReviews.sort.gradeAsc')}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          {/* 語言 chips + 清除 */}
-          <div className="flex flex-wrap items-center gap-2">
-            {REVIEW_LANGUAGES.map(lang => {
-              const isSelected = selectedLanguages.includes(lang);
-              const count = languageCounts[lang] || 0;
-              return (
-                <button
-                  key={lang}
-                  type="button"
-                  onClick={() => toggleLanguage(lang)}
-                  className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
-                    isSelected
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground'
-                  }`}
-                >
-                  {getLanguageDisplayName(lang)}{count > 0 ? ` (${count})` : ''}
-                </button>
-              );
-            })}
-            {hasActiveFilters && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearAllFilters}
-                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground ml-auto"
-              >
-                <X className="h-3.5 w-3.5 mr-1" />
-                {t('filter.clearAll')}
-              </Button>
-            )}
-          </div>
-          {/* 統計 + 提示 */}
-          <div className="text-xs text-muted-foreground space-y-0.5">
-            <p>{t('latestReviews.matchedCount', { filtered: filteredReviews.length, loaded: reviews.length })}</p>
-            {hasActiveFilters && hasMore && <p>{t('latestReviews.filterHint')}</p>}
-          </div>
+        <div className="mb-6">
+          <LatestReviewsFilters
+            filters={filters}
+            onFiltersChange={setFilters}
+            courseCounts={filterCounts.courseCounts}
+            instructorCounts={filterCounts.instructorCounts}
+            gradeCounts={filterCounts.gradeCounts}
+            termCounts={filterCounts.termCounts}
+            languageCounts={filterCounts.languageCounts}
+            sessionTypeCounts={filterCounts.sessionTypeCounts}
+            totalReviews={reviews.length}
+            filteredReviews={filteredReviews.length}
+            onClearAll={clearAllFilters}
+            showLoadMoreHint={hasMore}
+          />
         </div>
       )}
 
