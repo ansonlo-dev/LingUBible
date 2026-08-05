@@ -643,6 +643,8 @@ const RouterContent = ({
                     <Route path="/" element={<Index />} />
                     <Route path="/courses" element={<Courses />} />
                     <Route path="/courses/:courseCode" element={<CourseDetail />} />
+                    {/* 分頁直達路由：/courses/XXX/reviews 等，直接落在指定分頁 */}
+                    <Route path="/courses/:courseCode/:tab" element={<CourseDetail />} />
                     <Route path="/instructors" element={<InstructorsList />} />
                     <Route path="/reviews" element={<LatestReviews />} />
                     <Route path="/planner" element={<Timetable />} />
@@ -652,6 +654,8 @@ const RouterContent = ({
                     <Route path="/gpa-hons" element={<GpaHons />} />
                     <Route path="/calendar" element={<Calendar />} />
                     <Route path="/instructors/:instructorName" element={<Lecturers />} />
+                    {/* 分頁直達路由：/instructors/XXX/reviews 等，直接落在指定分頁 */}
+                    <Route path="/instructors/:instructorName/:tab" element={<Lecturers />} />
                     <Route path="/write-review" element={<WriteReview />} />
                     <Route path="/write-review/:courseCode" element={<WriteReview />} />
                     <Route path="/my-reviews" element={

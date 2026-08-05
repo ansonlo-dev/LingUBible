@@ -549,8 +549,11 @@ const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ c
   );
 };
 
+// 主分頁的有效值 — 與 /courses/:courseCode/:tab 路由的 tab 參數對應
+const COURSE_MAIN_TABS = ['overview', 'teaching', 'reviews', 'grades', 'materials', 'exams'];
+
 const CourseDetail = () => {
-  const { courseCode } = useParams<{ courseCode: string }>();
+  const { courseCode, tab } = useParams<{ courseCode: string; tab?: string }>();
   const navigate = useNavigate();
   const promptLogin = useLoginRequired();
   const [searchParams] = useSearchParams();
@@ -751,7 +754,29 @@ const CourseDetail = () => {
   // 篩選狀態
   const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string | string[]>('all');
   const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
-  const [activeMainTab, setActiveMainTab] = useState<string>('overview');
+  // 主分頁：URL 的 :tab 優先；帶 review_id 深層連結時預設落在評論分頁
+  // （否則目標評論不在 DOM 內，捲動定位會失敗）；其餘預設 overview
+  const [activeMainTab, setActiveMainTab] = useState<string>(() => {
+    if (tab && COURSE_MAIN_TABS.includes(tab)) return tab;
+    if (searchParams.get('review_id')) return 'reviews';
+    return 'overview';
+  });
+
+  // 切換分頁時把分頁寫回 URL（replace 避免塞爆瀏覽歷史），複製網址即可直達
+  const handleMainTabChange = (value: string) => {
+    setActiveMainTab(value);
+    const qs = searchParams.toString();
+    navigate(`/courses/${courseCode}/${value}${qs ? `?${qs}` : ''}`, { replace: true });
+  };
+
+  // 瀏覽器前進/後退改變 :tab 時同步分頁狀態
+  useEffect(() => {
+    const target = tab && COURSE_MAIN_TABS.includes(tab)
+      ? tab
+      : (searchParams.get('review_id') ? 'reviews' : 'overview');
+    setActiveMainTab(prev => (prev === target ? prev : target));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
   // Whether the tab row overflows horizontally (tabs wider than the screen).
   // When it does, the content's top-right corner is covered by a tab, so we
   // drop the top-right border radius; otherwise we round it.
@@ -2317,7 +2342,7 @@ const CourseDetail = () => {
         </Card>
       </div>
 
-      <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className={`w-full ${tabsScrollable ? 'tabs-scrollable' : ''}`}>
+      <Tabs value={activeMainTab} onValueChange={handleMainTabChange} className={`w-full ${tabsScrollable ? 'tabs-scrollable' : ''}`}>
         {/* Tab Navigation - Attached Design */}
         <div className="attached-tabs-container">
           <TabsList ref={tabsListRef} className="attached-tabs-list">

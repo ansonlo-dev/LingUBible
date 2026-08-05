@@ -239,14 +239,41 @@ const extractRawDepartmentName = (department: string): string => {
   return translatedToRawMapping[department] || department;
 };
 
+// 主分頁的有效值 — 與 /instructors/:instructorName/:tab 路由的 tab 參數對應
+const INSTRUCTOR_MAIN_TABS = ['courses', 'reviews', 'grades'];
+
 const Lecturers = () => {
-  const { instructorName } = useParams<{ instructorName: string }>();
+  const { instructorName, tab } = useParams<{ instructorName: string; tab?: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const promptLogin = useLoginRequired();
   const [searchParams] = useSearchParams();
   const { t, language } = useLanguage();
   const isMobile = useIsMobile();
+
+  // 主分頁：URL 的 :tab 優先；帶 review_id 深層連結時預設落在評論分頁
+  // （否則目標評論不在 DOM 內，捲動定位會失敗）；其餘預設 courses
+  const [activeMainTab, setActiveMainTab] = useState<string>(() => {
+    if (tab && INSTRUCTOR_MAIN_TABS.includes(tab)) return tab;
+    if (searchParams.get('review_id')) return 'reviews';
+    return 'courses';
+  });
+
+  // 切換分頁時把分頁寫回 URL（replace 避免塞爆瀏覽歷史），複製網址即可直達
+  const handleMainTabChange = (value: string) => {
+    setActiveMainTab(value);
+    const qs = searchParams.toString();
+    navigate(`/instructors/${encodeURIComponent(instructorName || '')}/${value}${qs ? `?${qs}` : ''}`, { replace: true });
+  };
+
+  // 瀏覽器前進/後退改變 :tab 時同步分頁狀態
+  useEffect(() => {
+    const target = tab && INSTRUCTOR_MAIN_TABS.includes(tab)
+      ? tab
+      : (searchParams.get('review_id') ? 'reviews' : 'courses');
+    setActiveMainTab(prev => (prev === target ? prev : target));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab]);
 
   // Writing a review requires an account — guests get the shared login prompt.
   const handleSubmitInstructorReview = (name: string) => {
@@ -2014,7 +2041,7 @@ const Lecturers = () => {
         )}
       </div>
 
-      <Tabs defaultValue="courses" className="w-full">
+      <Tabs value={activeMainTab} onValueChange={handleMainTabChange} className="w-full">
         {/* Tab Navigation - Attached Design */}
         <div className="attached-tabs-container">
           <TabsList className="attached-tabs-list">
