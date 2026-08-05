@@ -368,6 +368,7 @@ export default {
   'sessionType.lab': 'Lab',
   'sessionType.project': 'Project',
   'sessionType.seminar': 'Seminar',
+  'sessionType.unknown': 'Unknown',
   // Session types for review cards (same as above for English)
   'sessionTypeBadge.lecture': 'Lecture',
   'sessionTypeBadge.tutorial': 'Tutorial',

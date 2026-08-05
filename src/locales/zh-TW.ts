@@ -349,6 +349,7 @@ export default {
   'sessionType.lab': '實驗',
   'sessionType.project': '專題 (Project)',
   'sessionType.seminar': '研討 (Seminar)',
+  'sessionType.unknown': '未知 (Unknown)',
   // Session types for review cards (without brackets)
   'sessionTypeBadge.lecture': '講課',
   'sessionTypeBadge.tutorial': '導修',
