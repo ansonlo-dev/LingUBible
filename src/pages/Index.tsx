@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { StatsCard } from "@/components/features/reviews/StatsCard";
 import { PopularItemCard } from "@/components/features/reviews/PopularItemCard";
+import { LatestReviewsPreview } from "@/components/features/reviews/LatestReviewsPreview";
 import { RollingText } from "@/components/features/animations/RollingText";
 import { FloatingGlare } from "@/components/features/animations/FloatingGlare";
 import { FloatingCircles } from "@/components/features/animations/FloatingCircles";
@@ -736,7 +737,10 @@ const Index = () => {
             </TabsContent>
           </Tabs>
         </div>
-        
+
+        {/* Latest Reviews Preview - 與 /reviews 第一頁共用同一份被動快取，無額外請求 */}
+        <LatestReviewsPreview />
+
         {/* Heaven Transition Effect */}
         {showHeavenTransition && (
           <HeavenTransition

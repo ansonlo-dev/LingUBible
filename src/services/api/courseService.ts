@@ -2069,6 +2069,7 @@ export class CourseService {
       // 清除該課程相關快取，讓新評論立即顯示
       this.clearCourseCache(reviewData.course_code);
       this.clearReviewsScanCache();
+      this.clearLatestReviewsCache();
 
       // 重算該課程與全部講師的反正規化統計（非阻塞）
       this.triggerCourseStatsRecompute(reviewData.course_code);
@@ -2738,13 +2739,33 @@ export class CourseService {
     }
   }
 
+  /** /reviews 頁與主頁預覽共用的頁大小 — 兩處用同一值才能命中同一份快取 */
+  static readonly LATEST_REVIEWS_PAGE_SIZE = 20;
+
   /**
-   * 獲取全站最新評論（跨課程，供 /reviews 最新評論頁使用）
-   * - 游標分頁（cursorAfter），首頁走被動記憶體快取（TTL 5 分鐘）
+   * 清除最新評論快取（記憶體 + 持久化）。發佈／修改／刪除評論後呼叫，
+   * 讓用戶立即在 /reviews 與主頁預覽看到自己的變更。
+   */
+  private static clearLatestReviewsCache(): void {
+    for (const key of [...this.cache.keys()]) {
+      if (key.startsWith('latest_reviews_')) {
+        this.cache.delete(key);
+        persistentCache.delete(key);
+      }
+    }
+    // 整頁重新載入後記憶體 map 是空的，但 localStorage 仍在 — 預設頁大小的 key 固定刪一次
+    persistentCache.delete(`latest_reviews_${this.LATEST_REVIEWS_PAGE_SIZE}`);
+  }
+
+  /**
+   * 獲取全站最新評論（跨課程，供 /reviews 最新評論頁與主頁預覽使用）
+   * - 游標分頁（cursorAfter），首頁走被動雙層快取（記憶體 + localStorage，TTL 5 分鐘）
    * - 比照 getUserReviews 的批次模式：一次 listRows + 批次補齊學期／課程／講師／投票統計，
    *   避免每筆評論各自發請求的 N+1
+   * - 課程／講師優先從目錄持久化快取過濾（0 次讀取），只針對缺少的項目發批次查詢；
+   *   學期在 getTermsByCodes 內已走 all_terms 快取
    */
-  static async getLatestReviews(limit: number = 20, cursor?: string): Promise<{
+  static async getLatestReviews(limit: number = this.LATEST_REVIEWS_PAGE_SIZE, cursor?: string): Promise<{
     reviews: (InstructorReviewFromDetails & { upvotes: number; downvotes: number })[];
     instructors: Instructor[];
     hasMore: boolean;
@@ -2754,7 +2775,7 @@ export class CourseService {
       // 只有第一頁（無游標）走快取；後續頁面按需載入
       const cacheKey = `latest_reviews_${limit}`;
       if (!cursor) {
-        const cached = this.getCached<{
+        const cached = this.getPersistentCached<{
           reviews: (InstructorReviewFromDetails & { upvotes: number; downvotes: number })[];
           instructors: Instructor[];
           hasMore: boolean;
@@ -2762,6 +2783,9 @@ export class CourseService {
         }>(cacheKey);
         if (cached) return cached;
       }
+
+      // 主頁預覽與 /reviews 頁可能同時掛載 — 去重同時發出的相同請求
+      return await this.runWithInFlightDedup(`${cacheKey}_${cursor || 'first'}`, async () => {
 
       const queries = [
         Query.orderDesc('$createdAt'),
@@ -2787,7 +2811,7 @@ export class CourseService {
       const reviews = hasMore ? rows.slice(0, limit) : rows;
 
       if (reviews.length === 0) {
-        return { reviews: [], instructors: [], hasMore: false, nextCursor: null };
+        return { reviews: [], instructors: [] as Instructor[], hasMore: false, nextCursor: null };
       }
 
       // 先解析 instructor_details，一併收集講師名字供批次查詢
@@ -2810,17 +2834,39 @@ export class CourseService {
       const uniqueCourseCodes = [...new Set(reviews.map(r => r.course_code).filter(Boolean))];
       const reviewIds = reviews.map(r => r.$id);
 
-      const [batchTerms, batchCourses, batchInstructors, voteStatsMap] = await Promise.all([
+      // 課程目錄快取（課程列表頁同一份資料，含 title/_tc/_sc）命中的部分 0 次讀取
+      const courseCatalog = this.getPersistentCached<CourseWithStats[]>(PERSISTENT_CACHE_KEYS.ALL_COURSES_WITH_STATS);
+      let coursesFromCache: Course[] = [];
+      let missingCourseCodes = uniqueCourseCodes;
+      if (courseCatalog && courseCatalog.length > 0) {
+        const wanted = new Set(uniqueCourseCodes);
+        coursesFromCache = courseCatalog.filter(c => wanted.has(c.course_code));
+        const found = new Set(coursesFromCache.map(c => c.course_code));
+        missingCourseCodes = uniqueCourseCodes.filter(code => !found.has(code));
+      }
+
+      // 講師目錄快取（講師列表頁同一份資料，含 name/_tc/_sc）命中的部分 0 次讀取
+      const instructorCatalog = this.getPersistentCached<InstructorWithDetailedStats[]>(PERSISTENT_CACHE_KEYS.ALL_INSTRUCTORS_WITH_DETAILED_STATS);
+      let instructorsFromCache: Instructor[] = [];
+      let missingInstructorNames = [...instructorNames];
+      if (instructorCatalog && instructorCatalog.length > 0) {
+        instructorsFromCache = instructorCatalog.filter(i => instructorNames.has(i.name));
+        const found = new Set(instructorsFromCache.map(i => i.name));
+        missingInstructorNames = [...instructorNames].filter(name => !found.has(name));
+      }
+
+      const [batchTerms, fetchedCourses, fetchedInstructors, voteStatsMap] = await Promise.all([
         uniqueTermCodes.length > 0 ? this.getTermsByCodes(uniqueTermCodes) : Promise.resolve([] as Term[]),
-        uniqueCourseCodes.length > 0 ? this.getCoursesByCodes(uniqueCourseCodes) : Promise.resolve([] as Course[]),
-        instructorNames.size > 0 ? this.getInstructorsByNames([...instructorNames]) : Promise.resolve([] as Instructor[]),
+        missingCourseCodes.length > 0 ? this.getCoursesByCodes(missingCourseCodes) : Promise.resolve([] as Course[]),
+        missingInstructorNames.length > 0 ? this.getInstructorsByNames(missingInstructorNames) : Promise.resolve([] as Instructor[]),
         this.getBatchReviewVoteStats(reviewIds),
       ]);
 
+      const batchInstructors = [...instructorsFromCache, ...fetchedInstructors];
       const termsByCode = new Map<string, Term>();
       batchTerms.forEach(term => termsByCode.set(term.term_code, term));
       const coursesByCode = new Map<string, Course>();
-      batchCourses.forEach(course => coursesByCode.set(course.course_code, course));
+      [...coursesFromCache, ...fetchedCourses].forEach(course => coursesByCode.set(course.course_code, course));
 
       const reviewsWithInfo = reviews.map(review => {
         const term = termsByCode.get(review.term_code);
@@ -2846,10 +2892,13 @@ export class CourseService {
       };
 
       if (!cursor) {
-        this.setCached(cacheKey, result, 5 * 60 * 1000); // 5分鐘被動快取
+        // 雙層被動快取：TTL 維持 5 分鐘（與原本相同的新鮮度），但 localStorage
+        // 讓整頁重新載入／跨分頁（主頁預覽 ↔ /reviews）也能命中，0 次讀取
+        this.setPersistentCached(cacheKey, result, 5 * 60 * 1000, 5 * 60 * 1000);
       }
 
       return result;
+      });
     } catch (error) {
       console.error('Error fetching latest reviews:', error);
       throw new Error('Failed to fetch latest reviews');
@@ -2909,6 +2958,7 @@ export class CourseService {
         this.clearCourseCache(courseCodeToRecompute);
         this.clearReviewsScanCache();
       }
+      this.clearLatestReviewsCache();
 
       // 重算該課程與全部講師的反正規化統計（非阻塞）
       if (courseCodeToRecompute) {
@@ -2936,6 +2986,7 @@ export class CourseService {
       // 清除該課程相關快取，讓更新立即反映
       this.clearCourseCache((response as unknown as Review).course_code);
       this.clearReviewsScanCache();
+      this.clearLatestReviewsCache();
 
       // 重算該課程與全部講師的反正規化統計（非阻塞）。course_code 取自更新後的完整文件
       this.triggerCourseStatsRecompute((response as unknown as Review).course_code);

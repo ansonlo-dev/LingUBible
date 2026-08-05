@@ -20,7 +20,8 @@ import { hasMarkdownFormatting, renderCommentMarkdown } from '@/utils/ui/markdow
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { getInstructorName, getCourseTitle } from '@/utils/textUtils';
 
-const PAGE_SIZE = 20;
+// 與主頁預覽共用同一頁大小，兩處才會命中同一份快取
+const PAGE_SIZE = CourseService.LATEST_REVIEWS_PAGE_SIZE;
 
 type LatestReviewInfo = InstructorReviewFromDetails & { upvotes: number; downvotes: number };
 

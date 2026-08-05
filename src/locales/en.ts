@@ -2016,6 +2016,7 @@ export default {
   // My Reviews page
   'latestReviews.title': 'Latest Reviews',
   'latestReviews.subtitle': 'Browse the newest course reviews across the site to stay up to date',
+  'latestReviews.viewAll': 'View All',
   'latestReviews.loadMore': 'Load More',
   'latestReviews.noMoreReviews': 'All reviews loaded',
   'latestReviews.noReviews': 'No Reviews Yet',

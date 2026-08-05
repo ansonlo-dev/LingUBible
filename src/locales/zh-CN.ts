@@ -1928,6 +1928,7 @@ export default {
   // My Reviews page
   'latestReviews.title': '最新评论',
   'latestReviews.subtitle': '浏览全站最新的课程评论，掌握最新资讯',
+  'latestReviews.viewAll': '查看全部',
   'latestReviews.loadMore': '载入更多',
   'latestReviews.noMoreReviews': '已显示所有评论',
   'latestReviews.noReviews': '暂无评论',
