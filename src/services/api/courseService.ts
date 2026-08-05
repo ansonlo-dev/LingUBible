@@ -2739,6 +2739,124 @@ export class CourseService {
   }
 
   /**
+   * 獲取全站最新評論（跨課程，供 /reviews 最新評論頁使用）
+   * - 游標分頁（cursorAfter），首頁走被動記憶體快取（TTL 5 分鐘）
+   * - 比照 getUserReviews 的批次模式：一次 listRows + 批次補齊學期／課程／講師／投票統計，
+   *   避免每筆評論各自發請求的 N+1
+   */
+  static async getLatestReviews(limit: number = 20, cursor?: string): Promise<{
+    reviews: (InstructorReviewFromDetails & { upvotes: number; downvotes: number })[];
+    instructors: Instructor[];
+    hasMore: boolean;
+    nextCursor: string | null;
+  }> {
+    try {
+      // 只有第一頁（無游標）走快取；後續頁面按需載入
+      const cacheKey = `latest_reviews_${limit}`;
+      if (!cursor) {
+        const cached = this.getCached<{
+          reviews: (InstructorReviewFromDetails & { upvotes: number; downvotes: number })[];
+          instructors: Instructor[];
+          hasMore: boolean;
+          nextCursor: string | null;
+        }>(cacheKey);
+        if (cached) return cached;
+      }
+
+      const queries = [
+        Query.orderDesc('$createdAt'),
+        // 多取一筆用來判斷是否還有下一頁
+        Query.limit(limit + 1),
+        Query.select(['$id', 'user_id', 'is_anon', 'username', 'course_code', 'term_code',
+                     'course_workload', 'course_difficulties', 'course_usefulness',
+                     'course_final_grade', 'course_comments', 'instructor_details',
+                     'review_language', 'submitted_at', '$createdAt'])
+      ];
+      if (cursor) {
+        queries.push(Query.cursorAfter(cursor));
+      }
+
+      const response = await tablesDB.listRows(
+        this.DATABASE_ID,
+        this.REVIEWS_COLLECTION_ID,
+        queries
+      );
+
+      const rows = response.rows as unknown as Review[];
+      const hasMore = rows.length > limit;
+      const reviews = hasMore ? rows.slice(0, limit) : rows;
+
+      if (reviews.length === 0) {
+        return { reviews: [], instructors: [], hasMore: false, nextCursor: null };
+      }
+
+      // 先解析 instructor_details，一併收集講師名字供批次查詢
+      const parsedDetails = new Map<string, InstructorDetail[]>();
+      const instructorNames = new Set<string>();
+      reviews.forEach(review => {
+        let details: InstructorDetail[] = [];
+        try {
+          details = JSON.parse(review.instructor_details);
+        } catch (error) {
+          console.error('Error parsing instructor details:', error);
+        }
+        parsedDetails.set(review.$id, details);
+        details.forEach(d => {
+          if (d.instructor_name) instructorNames.add(d.instructor_name);
+        });
+      });
+
+      const uniqueTermCodes = [...new Set(reviews.map(r => r.term_code).filter(Boolean))];
+      const uniqueCourseCodes = [...new Set(reviews.map(r => r.course_code).filter(Boolean))];
+      const reviewIds = reviews.map(r => r.$id);
+
+      const [batchTerms, batchCourses, batchInstructors, voteStatsMap] = await Promise.all([
+        uniqueTermCodes.length > 0 ? this.getTermsByCodes(uniqueTermCodes) : Promise.resolve([] as Term[]),
+        uniqueCourseCodes.length > 0 ? this.getCoursesByCodes(uniqueCourseCodes) : Promise.resolve([] as Course[]),
+        instructorNames.size > 0 ? this.getInstructorsByNames([...instructorNames]) : Promise.resolve([] as Instructor[]),
+        this.getBatchReviewVoteStats(reviewIds),
+      ]);
+
+      const termsByCode = new Map<string, Term>();
+      batchTerms.forEach(term => termsByCode.set(term.term_code, term));
+      const coursesByCode = new Map<string, Course>();
+      batchCourses.forEach(course => coursesByCode.set(course.course_code, course));
+
+      const reviewsWithInfo = reviews.map(review => {
+        const term = termsByCode.get(review.term_code);
+        const course = coursesByCode.get(review.course_code);
+        if (!term || !course) return null;
+        const voteStats = voteStatsMap.get(review.$id) || { upvotes: 0, downvotes: 0 };
+        return {
+          review,
+          term,
+          course,
+          instructorDetails: parsedDetails.get(review.$id) || [],
+          upvotes: voteStats.upvotes,
+          downvotes: voteStats.downvotes,
+        };
+      }).filter((info): info is NonNullable<typeof info> => info !== null);
+
+      const result = {
+        reviews: reviewsWithInfo,
+        instructors: batchInstructors,
+        hasMore,
+        // 游標必須指向原始回傳的最後一筆（含被 term/course 過濾掉的），否則會跳過資料
+        nextCursor: hasMore ? reviews[reviews.length - 1].$id : null,
+      };
+
+      if (!cursor) {
+        this.setCached(cacheKey, result, 5 * 60 * 1000); // 5分鐘被動快取
+      }
+
+      return result;
+    } catch (error) {
+      console.error('Error fetching latest reviews:', error);
+      throw new Error('Failed to fetch latest reviews');
+    }
+  }
+
+  /**
    * 刪除評論
    */
   static async deleteReview(reviewId: string): Promise<void> {

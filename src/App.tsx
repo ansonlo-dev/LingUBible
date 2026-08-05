@@ -26,6 +26,7 @@ import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
 import Lecturers from "./pages/Lecturers";
 import InstructorsList from "./pages/InstructorsList";
+import LatestReviews from "./pages/LatestReviews";
 import Timetable from "./pages/Timetable";
 import GpaHons from "./pages/GpaHons";
 import Calendar from "./pages/Calendar";
@@ -643,6 +644,7 @@ const RouterContent = ({
                     <Route path="/courses" element={<Courses />} />
                     <Route path="/courses/:courseCode" element={<CourseDetail />} />
                     <Route path="/instructors" element={<InstructorsList />} />
+                    <Route path="/reviews" element={<LatestReviews />} />
                     <Route path="/planner" element={<Timetable />} />
                     {/* Legacy paths → keep old links (incl. shared ?query) working */}
                     <Route path="/lesson-planner" element={<LegacyTimetableRedirect />} />

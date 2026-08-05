@@ -1,4 +1,4 @@
-import { BookOpen, GraduationCap, Star, Settings, Languages, LogOut, Menu, MessageSquareText, Heart, UserCircle, Mail, BookText, Calculator, BookCheck, CalendarRange } from 'lucide-react';
+import { BookOpen, GraduationCap, Star, Settings, Languages, LogOut, Menu, MessageSquareText, MessagesSquare, Heart, UserCircle, Mail, BookText, Calculator, BookCheck, CalendarRange } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { APP_CONFIG } from '@/utils/constants/config';
@@ -254,7 +254,8 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
       label: t('sidebar.browse'),
       items: [
         { name: t('nav.courses'), href: '/courses', icon: BookText, current: location.pathname === '/courses' },
-        { name: t('nav.lecturers'), href: '/instructors', icon: GraduationCap, current: location.pathname === '/instructors' }
+        { name: t('nav.lecturers'), href: '/instructors', icon: GraduationCap, current: location.pathname === '/instructors' },
+        { name: t('nav.latestReviews'), href: '/reviews', icon: MessagesSquare, current: location.pathname === '/reviews' }
       ]
     },
     // Tools 分組
