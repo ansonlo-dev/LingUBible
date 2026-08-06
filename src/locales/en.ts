@@ -1804,6 +1804,8 @@ export default {
   'review.rating.4': 'Satisfied',
   'review.rating.5': 'Very Satisfied',
   'review.rating.notRated': 'Not rated yet',
+  'review.expandMore': 'Show more',
+  'review.collapse': 'Collapse',
   'review.commonPhrases': 'Common Phrases',
   'review.positivePhrases': 'Positive',
   'review.negativePhrases': 'Negative',
