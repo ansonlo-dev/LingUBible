@@ -4,6 +4,7 @@ import {
   EmailIcon,
   EmailShareButton,
   FacebookIcon,
+  FacebookMessengerIcon,
   FacebookShareButton,
   LinkedinIcon,
   LinkedinShareButton,
@@ -37,6 +38,9 @@ const MESSAGE_MAX_LENGTH = 280;
  */
 const ICON_BOX_CLASS = 'h-10 w-10 sm:h-11 sm:w-11';
 
+/** 深層連結沒開成的話瀏覽器不會報錯，只能靠「頁面有沒有被切到背景」來判斷。 */
+const DEEP_LINK_TIMEOUT_MS = 1200;
+
 export interface ShareSheetProps {
   shareUrl: string;
   title: string;
@@ -48,29 +52,6 @@ export interface ShareSheetProps {
   onShared?: () => void;
 }
 
-/** react-share 沒有 Instagram（官方沒有網頁分享端點），自繪一顆同尺寸的圓形圖示。 */
-function InstagramRoundIcon() {
-  // useId 產生的 ":r0:" 含冒號，去掉後才是穩當的 SVG 片段識別碼
-  const gradientId = `ig-gradient-${React.useId().replace(/:/g, '')}`;
-  return (
-    <svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true" focusable="false">
-      <defs>
-        <radialGradient id={gradientId} cx="28%" cy="102%" r="130%">
-          <stop offset="0%" stopColor="#fdf497" />
-          <stop offset="12%" stopColor="#fdf497" />
-          <stop offset="35%" stopColor="#fd5949" />
-          <stop offset="58%" stopColor="#d6249f" />
-          <stop offset="90%" stopColor="#285aeb" />
-        </radialGradient>
-      </defs>
-      <circle cx="32" cy="32" r="32" fill={`url(#${gradientId})`} />
-      <rect x="20" y="20" width="24" height="24" rx="7.5" fill="none" stroke="#fff" strokeWidth="2.6" />
-      <circle cx="32" cy="32" r="6.2" fill="none" stroke="#fff" strokeWidth="2.6" />
-      <circle cx="39.9" cy="24.3" r="1.8" fill="#fff" />
-    </svg>
-  );
-}
-
 /** react-share 的 <button> 是 inline-flex + 內聯樣式，自繪的按鈕要對齊它才不會高低不一。 */
 const CUSTOM_TILE_BUTTON_CLASS =
   'inline-flex h-full w-full items-center justify-center rounded-full outline-none';
@@ -78,8 +59,8 @@ const CUSTOM_TILE_BUTTON_CLASS =
 /** 一格網路：圖示在上、名稱在下。 */
 function NetworkTile({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    // min-w-0：欄位在 320px 的機器上只有約 55px，沒有這個的話標籤（Instagram、
-    // WhatsApp）的 min-content 會把整條 grid 撐寬，連帶頂破對話框
+    // min-w-0：欄位在 320px 的機器上只有約 55px，沒有這個的話標籤（WhatsApp、
+    // Messenger）的 min-content 會把整條 grid 撐寬，連帶頂破對話框
     <div className="flex min-w-0 flex-col items-center gap-1.5">
       <div
         className={cn(
@@ -171,19 +152,46 @@ export default function ShareSheet({
     }
   }, [copyToClipboard, t, toast]);
 
-  const handleInstagram = useCallback(() => {
-    // Instagram 沒有網頁分享端點，能做到最順的就是「複製連結 + 打開 Instagram」，
-    // 讓使用者貼進限時動態連結貼紙 / 私訊 / 個人簡介。
-    // window.open 必須跟點擊在同一個 tick，等 await 完再開會被 Safari 當彈出視窗擋掉。
-    window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
+  const copyForMessenger = useCallback(() => {
     void copyToClipboard().then((ok) => {
       toast({
         variant: ok ? undefined : 'destructive',
-        title: ok ? t('share.instagramCopied') : t('share.copyFailed'),
-        description: ok ? t('share.instagramCopiedDescription') : t('share.copyFailedDescription'),
+        title: ok ? t('share.messengerCopied') : t('share.copyFailed'),
+        description: ok ? t('share.messengerCopiedDescription') : t('share.copyFailedDescription'),
       });
     });
   }, [copyToClipboard, t, toast]);
+
+  const handleMessenger = useCallback(() => {
+    // Messenger 的網頁分享端點（facebook.com/dialog/send）強制要 Facebook App ID，
+    // 本站沒有註冊，因此手機直接叫 App 的深層連結；桌機沒有可用端點，退回複製。
+    const isTouch =
+      typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse)').matches === true;
+    if (!isTouch) {
+      copyForMessenger();
+      return;
+    }
+
+    // 沒裝 Messenger 時深層連結會靜靜地什麼都不做，只能用「頁面是否被切走」
+    // 判斷有沒有開成功；逾時仍在前景就當作失敗，改為複製連結。
+    let leftPage = false;
+    const markLeft = () => {
+      leftPage = true;
+    };
+    document.addEventListener('visibilitychange', markLeft);
+    window.addEventListener('pagehide', markLeft);
+    window.addEventListener('blur', markLeft);
+
+    window.location.href = `fb-messenger://share/?link=${encodeURIComponent(shareUrl)}`;
+
+    setTimeout(() => {
+      document.removeEventListener('visibilitychange', markLeft);
+      window.removeEventListener('pagehide', markLeft);
+      window.removeEventListener('blur', markLeft);
+      if (leftPage || document.visibilityState === 'hidden') return;
+      copyForMessenger();
+    }, DEEP_LINK_TIMEOUT_MS);
+  }, [copyForMessenger, shareUrl]);
 
   const handleNativeShare = useCallback(async () => {
     try {
@@ -282,17 +290,6 @@ export default function ShareSheet({
           </XShareButton>
         </NetworkTile>
 
-        <NetworkTile label="Instagram">
-          <button
-            type="button"
-            onClick={handleInstagram}
-            aria-label={`${t('share.dialogTitle')} – Instagram`}
-            className={CUSTOM_TILE_BUTTON_CLASS}
-          >
-            <InstagramRoundIcon />
-          </button>
-        </NetworkTile>
-
         <NetworkTile label="LinkedIn">
           {/* LinkedIn 目前只認 url，標題／摘要一律由它自己抓 og 標籤決定 */}
           <LinkedinShareButton url={shareUrl} title={title} summary={description} source="LingUBible">
@@ -304,6 +301,17 @@ export default function ShareSheet({
           <FacebookShareButton url={shareUrl}>
             <FacebookIcon size="100%" round />
           </FacebookShareButton>
+        </NetworkTile>
+
+        <NetworkTile label="Messenger">
+          <button
+            type="button"
+            onClick={handleMessenger}
+            aria-label={`${t('share.dialogTitle')} – Messenger`}
+            className={CUSTOM_TILE_BUTTON_CLASS}
+          >
+            <FacebookMessengerIcon size="100%" round />
+          </button>
         </NetworkTile>
 
         <NetworkTile label={t('share.email')}>
