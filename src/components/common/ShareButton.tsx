@@ -54,8 +54,8 @@ function ShareSheetSkeleton() {
       <div className="h-[72px] animate-pulse rounded-md bg-muted" />
       <div className="grid grid-cols-4 gap-x-2 gap-y-3 sm:grid-cols-5">
         {Array.from({ length: 8 }).map((_, i) => (
-          <div key={i} className="flex flex-col items-center gap-1.5">
-            <div className="h-11 w-11 animate-pulse rounded-full bg-muted" />
+          <div key={i} className="flex min-w-0 flex-col items-center gap-1.5">
+            <div className="h-10 w-10 animate-pulse rounded-full bg-muted sm:h-11 sm:w-11" />
             <div className="h-2 w-10 animate-pulse rounded bg-muted" />
           </div>
         ))}
@@ -147,13 +147,21 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
       </ResponsiveTooltip>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] max-w-md gap-4 overflow-y-auto p-5 sm:p-6">
-          <DialogHeader>
+        {/* grid-cols-[minmax(0,1fr)]：DialogContent 是 display:grid，隱式軌道是
+            auto，最小值等於內容的 min-content。<textarea> 有依 cols 算出的固有
+            寬度（中文字型下更寬），會把軌道撐得比對話框還寬，小螢幕上整塊內容
+            就溢出右邊。把唯一那欄鎖成 minmax(0,1fr) 才會真正跟著容器走。 */}
+        <DialogContent className="grid-cols-[minmax(0,1fr)] max-h-[90vh] w-[calc(100vw-2rem)] max-w-md gap-4 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
+          {/* text-left：DialogHeader 預設在手機是置中，但標題是「圖示 + 文字」的
+              flex 列一定靠左，兩者對不齊；統一靠左。pr-8 留給右上角的關閉鍵。 */}
+          <DialogHeader className="pr-8 text-left">
             <DialogTitle className="flex items-center gap-2 text-lg">
-              <Share2 className="h-5 w-5 text-primary" />
+              <Share2 className="h-5 w-5 shrink-0 text-primary" />
               {t('share.dialogTitle')}
             </DialogTitle>
-            <DialogDescription>{t('share.dialogDescription')}</DialogDescription>
+            <DialogDescription className="text-sm">
+              {t('share.dialogDescription')}
+            </DialogDescription>
           </DialogHeader>
 
           <Suspense fallback={<ShareSheetSkeleton />}>

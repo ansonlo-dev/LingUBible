@@ -30,7 +30,12 @@ import { cn } from '@/lib/utils';
 
 /** 分享訊息上限：X 的 280 字是所有目標平台裡最嚴的，統一以它為準。 */
 const MESSAGE_MAX_LENGTH = 280;
-const ICON_SIZE = 44;
+
+/**
+ * 圖示尺寸交給 CSS：小螢幕 40px、sm 以上 44px。react-share 的 Icon 接受
+ * size="100%"，所以外框給多大就畫多大，不必為了換尺寸重新 render。
+ */
+const ICON_BOX_CLASS = 'h-10 w-10 sm:h-11 sm:w-11';
 
 export interface ShareSheetProps {
   shareUrl: string;
@@ -44,11 +49,11 @@ export interface ShareSheetProps {
 }
 
 /** react-share 沒有 Instagram（官方沒有網頁分享端點），自繪一顆同尺寸的圓形圖示。 */
-function InstagramRoundIcon({ size = ICON_SIZE }: { size?: number }) {
+function InstagramRoundIcon() {
   // useId 產生的 ":r0:" 含冒號，去掉後才是穩當的 SVG 片段識別碼
   const gradientId = `ig-gradient-${React.useId().replace(/:/g, '')}`;
   return (
-    <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true" focusable="false">
+    <svg viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true" focusable="false">
       <defs>
         <radialGradient id={gradientId} cx="28%" cy="102%" r="130%">
           <stop offset="0%" stopColor="#fdf497" />
@@ -67,24 +72,31 @@ function InstagramRoundIcon({ size = ICON_SIZE }: { size?: number }) {
 }
 
 /** react-share 的 <button> 是 inline-flex + 內聯樣式，自繪的按鈕要對齊它才不會高低不一。 */
-const CUSTOM_TILE_BUTTON_CLASS = 'inline-flex items-center justify-center rounded-full outline-none';
+const CUSTOM_TILE_BUTTON_CLASS =
+  'inline-flex h-full w-full items-center justify-center rounded-full outline-none';
 
 /** 一格網路：圖示在上、名稱在下。 */
 function NetworkTile({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    // min-w-0：欄位在 320px 的機器上只有約 55px，沒有這個的話標籤（Instagram、
+    // WhatsApp）的 min-content 會把整條 grid 撐寬，連帶頂破對話框
+    <div className="flex min-w-0 flex-col items-center gap-1.5">
       <div
         className={cn(
+          ICON_BOX_CLASS,
           // flex（而非 block）讓外框緊貼圓形圖示，焦點環才會是正圓而不是橢圓
-          'flex rounded-full transition-transform duration-200',
+          'flex shrink-0 rounded-full transition-transform duration-200',
           'hover:scale-110 active:scale-95',
           // react-share 渲染的是原生 <button>，焦點環套在包裝層上比較好對齊
           'focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background',
+          '[&>button]:h-full [&>button]:w-full',
         )}
       >
         {children}
       </div>
-      <span className="text-center text-[11px] leading-tight text-muted-foreground">{label}</span>
+      <span className="w-full truncate text-center text-[10px] leading-tight text-muted-foreground sm:text-[11px]">
+        {label}
+      </span>
     </div>
   );
 }
@@ -186,7 +198,7 @@ export default function ShareSheet({
   }, [onShared, shareText, shareUrl, title]);
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       {/* 連結預覽卡：做成社群平台展開連結時的樣子，讓使用者按之前就知道自己在傳什麼 */}
       <div className="overflow-hidden rounded-xl border bg-muted/30">
         <div className="aspect-[1200/630] w-full overflow-hidden bg-muted">
@@ -248,25 +260,25 @@ export default function ShareSheet({
       <div className="grid grid-cols-4 gap-x-2 gap-y-3 sm:grid-cols-5">
         <NetworkTile label="WhatsApp">
           <WhatsappShareButton url={shareUrl} title={shareText} separator=" ">
-            <WhatsappIcon size={ICON_SIZE} round />
+            <WhatsappIcon size="100%" round />
           </WhatsappShareButton>
         </NetworkTile>
 
         <NetworkTile label="Telegram">
           <TelegramShareButton url={shareUrl} title={shareText}>
-            <TelegramIcon size={ICON_SIZE} round />
+            <TelegramIcon size="100%" round />
           </TelegramShareButton>
         </NetworkTile>
 
         <NetworkTile label="Threads">
           <ThreadsShareButton url={shareUrl} title={shareText}>
-            <ThreadsIcon size={ICON_SIZE} round />
+            <ThreadsIcon size="100%" round />
           </ThreadsShareButton>
         </NetworkTile>
 
         <NetworkTile label="X">
           <XShareButton url={shareUrl} title={shareText} hashtags={hashtags}>
-            <XIcon size={ICON_SIZE} round />
+            <XIcon size="100%" round />
           </XShareButton>
         </NetworkTile>
 
@@ -277,26 +289,26 @@ export default function ShareSheet({
             aria-label={`${t('share.dialogTitle')} – Instagram`}
             className={CUSTOM_TILE_BUTTON_CLASS}
           >
-            <InstagramRoundIcon size={ICON_SIZE} />
+            <InstagramRoundIcon />
           </button>
         </NetworkTile>
 
         <NetworkTile label="LinkedIn">
           {/* LinkedIn 目前只認 url，標題／摘要一律由它自己抓 og 標籤決定 */}
           <LinkedinShareButton url={shareUrl} title={title} summary={description} source="LingUBible">
-            <LinkedinIcon size={ICON_SIZE} round />
+            <LinkedinIcon size="100%" round />
           </LinkedinShareButton>
         </NetworkTile>
 
         <NetworkTile label="Facebook">
           <FacebookShareButton url={shareUrl}>
-            <FacebookIcon size={ICON_SIZE} round />
+            <FacebookIcon size="100%" round />
           </FacebookShareButton>
         </NetworkTile>
 
         <NetworkTile label={t('share.email')}>
           <EmailShareButton url={shareUrl} subject={title} body={shareText} separator={'\n\n'}>
-            <EmailIcon size={ICON_SIZE} round />
+            <EmailIcon size="100%" round />
           </EmailShareButton>
         </NetworkTile>
 
@@ -310,7 +322,6 @@ export default function ShareSheet({
                 CUSTOM_TILE_BUTTON_CLASS,
                 'bg-muted text-foreground/70 transition-colors hover:bg-accent',
               )}
-              style={{ width: ICON_SIZE, height: ICON_SIZE }}
             >
               <Smartphone className="h-5 w-5" />
             </button>
