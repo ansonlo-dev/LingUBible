@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   MessageSquare,
   Loader2,
@@ -339,6 +339,17 @@ const LatestReviews = () => {
           )}
         </div>
         <p className="text-muted-foreground">{t('latestReviews.subtitle')}</p>
+        <p className="text-sm text-muted-foreground">
+          {t('latestReviews.submitHintPrefix')}
+          <Link to="/courses" className="text-primary hover:underline font-medium">
+            {t('latestReviews.submitHintCourse')}
+          </Link>
+          {t('latestReviews.submitHintMiddle')}
+          <Link to="/instructors" className="text-primary hover:underline font-medium">
+            {t('latestReviews.submitHintInstructor')}
+          </Link>
+          {t('latestReviews.submitHintSuffix')}
+        </p>
       </div>
 
       {/* Loading State */}
