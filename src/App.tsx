@@ -512,14 +512,15 @@ const RouterContent = ({
   // 處理 URL 語言參數 - 現在在 Router 內部
   useLanguageFromUrl();
 
-  // 側邊欄快捷鍵 Alt+L 和 Ctrl+Shift+L
+  // 側邊欄快捷鍵 Alt+L 和 Ctrl+Shift+L（Mac 為 ⌥L 和 ⇧⌘L）
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Alt+L 或 Ctrl+Shift+L 快捷鍵
+      // Alt+L 或 Ctrl/Cmd+Shift+L 快捷鍵
+      const mod = e.ctrlKey || e.metaKey;
       if (
         e.key.toLowerCase() === 'l' &&
-        ((e.altKey && !e.ctrlKey && !e.shiftKey) ||
-         (e.ctrlKey && e.shiftKey && !e.altKey))
+        ((e.altKey && !mod && !e.shiftKey) ||
+         (mod && e.shiftKey && !e.altKey))
       ) {
         e.preventDefault();
         handleSidebarToggle();

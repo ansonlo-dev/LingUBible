@@ -5,6 +5,7 @@ import { VariantProps, cva } from "class-variance-authority"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useLanguage } from "@/hooks/useLanguage"
 import { cn } from "@/lib/utils"
+import { SIDEBAR_TOGGLE_SHORTCUT } from "@/utils/ui/platformShortcuts"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
@@ -254,8 +255,6 @@ const SidebarTrigger = React.forwardRef<
 >(({ className, onClick, ...props }, ref) => {
   const { toggleSidebar, state, isMobile } = useSidebar()
   
-  // 檢測操作系統
-  const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   
   // 導入翻譯 hook
   const { t } = useLanguage();
@@ -278,7 +277,7 @@ const SidebarTrigger = React.forwardRef<
         className
       )}
       title={!isMobile ? t('sidebar.toggleShortcut', { 
-        shortcut: isMac ? 'Alt+L or ⌘+Shift+L' : 'Alt+L or Ctrl+Shift+L' 
+        shortcut: SIDEBAR_TOGGLE_SHORTCUT 
       }) : undefined}
       onClick={(event) => {
         onClick?.(event)
@@ -314,8 +313,6 @@ const SidebarRail = React.forwardRef<
   const { toggleSidebar } = useSidebar()
   const { t } = useLanguage()
   
-  // 檢測操作系統
-  const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 
   return (
     <button
@@ -325,7 +322,7 @@ const SidebarRail = React.forwardRef<
       tabIndex={-1}
       onClick={toggleSidebar}
       title={t('sidebar.toggleShortcut', { 
-        shortcut: isMac ? 'Alt+L or ⌘+Shift+L' : 'Alt+L or Ctrl+Shift+L' 
+        shortcut: SIDEBAR_TOGGLE_SHORTCUT 
       })}
       className={cn(
         "absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-sidebar-border group-data-[side=left]:-right-4 group-data-[side=right]:left-0 sm:flex",

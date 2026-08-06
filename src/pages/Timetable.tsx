@@ -47,6 +47,7 @@ import {
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
+import { formatShortcut } from '@/utils/ui/platformShortcuts';
 import { Calendar } from '@/components/ui/calendar';
 import { format as formatDate, parseISO } from 'date-fns';
 import { enUS, zhTW, zhCN } from 'date-fns/locale';
@@ -94,10 +95,9 @@ const CUSTOM_TITLES_KEY = 'timetable.customTitles';
 const MAX_RESULTS = 80;
 
 // Keyboard-shortcut hints use the platform's own symbols (⌘/⇧ on Mac).
-const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
-const SHORTCUT_SEARCH = IS_MAC ? '⌘F' : 'Ctrl+F';
-const SHORTCUT_UNDO = IS_MAC ? '⌘Z' : 'Ctrl+Z';
-const SHORTCUT_REDO = IS_MAC ? '⇧⌘Z' : 'Ctrl+Shift+Z';
+const SHORTCUT_SEARCH = formatShortcut('F');
+const SHORTCUT_UNDO = formatShortcut('Z');
+const SHORTCUT_REDO = formatShortcut('Z', { shift: true });
 
 interface ExportOptions {
   // Timetable options (affect on-screen preview + export)

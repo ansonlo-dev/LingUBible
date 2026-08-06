@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserMenu } from "@/components/user/UserMenu";
 import { Link } from 'react-router-dom';
 import { useEnhancedResponsive } from '@/hooks/useEnhancedResponsive';
+import { MOD_KEY, SIDEBAR_TOGGLE_SHORTCUT } from '@/utils/ui/platformShortcuts';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -25,8 +26,6 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
   const [forceRender, setForceRender] = useState(0);
   const { isMobilePortrait, isMobileLandscape } = useEnhancedResponsive();
 
-  // 檢測操作系統
-  const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
 
   // 監聽強制用戶更新事件，確保 Header 立即反映用戶狀態變化
   useEffect(() => {
@@ -138,9 +137,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
                   size="icon"
                   onClick={onToggleSidebar}
                   className="flex"
-                  title={t('sidebar.toggleShortcut', { 
-                    shortcut: isMac ? 'Alt+L or ⌘+Shift+L' : 'Alt+L or Ctrl+Shift+L' 
-                  })}
+                  title={t('sidebar.toggleShortcut', { shortcut: SIDEBAR_TOGGLE_SHORTCUT })}
                 >
                   {/* Fix icon logic for mobile landscape */}
                   {isMobileLandscape ? (
@@ -171,7 +168,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
                   <span className="flex-1 truncate md:whitespace-nowrap text-sm text-center">{t('search.placeholder')}</span>
                   <div className="hidden md:flex items-center gap-1 flex-shrink-0">
                     <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                      <span className="text-xs">{isMac ? '⌘' : 'Ctrl'}</span>K
+                      <span className="text-xs">{MOD_KEY}</span>K
                     </kbd>
                   </div>
                 </button>
