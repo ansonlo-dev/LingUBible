@@ -1723,7 +1723,7 @@ export default {
   'review.gradeNotApplicable': '此課程沒有具體的成績可以換算成績點',
   'review.fillAllFields': '請填寫所有欄位',
   'review.preSelectedInstructorRequired': '從講師頁面進入時，您必須在評論中包含 {instructor}',
-  'review.cannotDeselectPreSelectedInstructor': '從講師頁面進入時，您無法取消選擇 {instructor}',
+  'review.cannotDeselectPreSelectedInstructor': '{instructor} 至少需在講課或導修其中一個場次保持選取',
   'review.commonPhrases': '常用短語',
   'review.positivePhrases': '正面',
   'review.negativePhrases': '負面',

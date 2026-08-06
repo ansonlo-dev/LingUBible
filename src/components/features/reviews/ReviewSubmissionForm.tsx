@@ -122,6 +122,32 @@ const serializeDraftForComparison = (draft: Omit<ReviewDraft, 'version' | 'saved
     ),
   });
 
+// teaching_records 缺少講師姓名時，CourseService 會以 'UNKNOWN' 代替。
+// 寫評論時不應讓使用者評價「未知教師」，除非該課程／學期沒有其他選項。
+const UNKNOWN_INSTRUCTOR_NAME = 'UNKNOWN';
+
+const isUnknownInstructorName = (raw: string | null | undefined): boolean => {
+  const names = splitInstructorNames(raw);
+  if (names.length === 0) return true;
+  return names.every(name => name.toUpperCase() === UNKNOWN_INSTRUCTOR_NAME);
+};
+
+/**
+ * 過濾掉「未知教師」的教學記錄；若該課程／學期只有未知教師，則保留（否則使用者無從選擇）。
+ * keepKeys 為目前已選取的 `name|session_type`，用於保留舊評論／草稿中已選的未知教師。
+ */
+const filterOutUnknownInstructorRecords = (
+  records: TeachingRecord[],
+  keepKeys: string[] = []
+): TeachingRecord[] => {
+  const hasKnownInstructor = records.some(record => !isUnknownInstructorName(record.instructor_name));
+  if (!hasKnownInstructor) return records;
+  return records.filter(record =>
+    !isUnknownInstructorName(record.instructor_name) ||
+    keepKeys.includes(`${record.instructor_name}|${record.session_type}`)
+  );
+};
+
 // 新增 StarRating 組件
 interface FormStarRatingProps {
   rating: number | null;
@@ -480,7 +506,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const [availableInstructors, setAvailableInstructors] = useState<TeachingRecord[]>([]);
   const [instructorsMap, setInstructorsMap] = useState<Map<string, Instructor>>(new Map());
   const [instructorCourses, setInstructorCourses] = useState<Course[]>([]);
-  
+  // 講師課程載入完成前先顯示全部課程；載入完成後即使結果為空也要以講師課程為準
+  const [instructorCoursesLoaded, setInstructorCoursesLoaded] = useState<boolean>(false);
+
   // Performance optimization: Cache teaching records to avoid redundant API calls
   const [teachingRecordsCache, setTeachingRecordsCache] = useState<Map<string, TeachingRecord[]>>(new Map());
   const [termsCache, setTermsCache] = useState<Map<string, Term>>(new Map());
@@ -492,6 +520,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const [selectedCourse, setSelectedCourse] = useState<string>('');
   const [selectedTerm, setSelectedTerm] = useState<string>('');
   const [selectedInstructors, setSelectedInstructors] = useState<string[]>([]);
+  // 非同步載入教學記錄時需要「當下」的已選講師（避免把已選的未知教師濾掉）
+  const selectedInstructorsRef = useRef<string[]>(selectedInstructors);
+  selectedInstructorsRef.current = selectedInstructors;
   const [preSelectedInstructor, setPreSelectedInstructor] = useState<string>('');
   const [originPage, setOriginPage] = useState<string>('');
   
@@ -624,9 +655,18 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     }
     
     // If instructor is pre-selected, only show courses taught by that instructor
-    // This will be populated when we load instructor's teaching records
-    return instructorCourses.length > 0 ? instructorCourses : courses;
-  }, [courses, preSelectedInstructor, instructorCourses]);
+    // 載入完成後即使結果為空也要以講師課程為準（避免誤列該講師沒教過的課）
+    return instructorCoursesLoaded ? instructorCourses : courses;
+  }, [courses, preSelectedInstructor, instructorCourses, instructorCoursesLoaded]);
+
+  // 從講師頁進入時，目前已選且屬於預選講師的場次（合併列 "A / B" 以成員包含比對）。
+  // 只有在僅剩一個時才鎖定該選項，讓使用者可自由取消其餘場次。
+  const preSelectedSelectedKeys = useMemo(() => {
+    if (originPage !== 'instructor' || !preSelectedInstructor) return [];
+    return selectedInstructors.filter(key =>
+      instructorNameMatches(key.split('|')[0], preSelectedInstructor)
+    );
+  }, [originPage, preSelectedInstructor, selectedInstructors]);
 
   // Memoize available session types to prevent unnecessary re-renders
   const availableSessionTypes = useMemo(() => {
@@ -1705,21 +1745,30 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     const loadInstructorCourses = async () => {
       if (!preSelectedInstructor) {
         setInstructorCourses([]);
+        setInstructorCoursesLoaded(false);
         return;
       }
 
       try {
         const teachingRecords = await getCachedInstructorTeachingRecords(preSelectedInstructor);
-        const uniqueCourseCodes = [...new Set(teachingRecords.map(record => record.course_code))];
+        // 只保留「該講師在過去學期教過」的課程：學期清單同樣只列過去學期，
+        // 否則選了只在當前/未來學期任教的課，學期會是空的（死路）
+        const uniqueCourseCodes = [...new Set(
+          teachingRecords
+            .filter(record => getTermStatus(record.term_code) === 'past')
+            .map(record => record.course_code)
+        )];
         
         // Load full course details for each unique course code using batch loading
         const coursesMap = await batchLoadCourses(uniqueCourseCodes);
         const validCourses = Array.from(coursesMap.values());
         
         setInstructorCourses(validCourses);
+        setInstructorCoursesLoaded(true);
       } catch (error) {
         console.error('Error loading instructor courses:', error);
         setInstructorCourses([]);
+        setInstructorCoursesLoaded(false);
       }
     };
 
@@ -1742,7 +1791,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         setTermsLoading(true);
         // Use cached teaching records to avoid redundant API calls
         const teachingRecords = await getCachedTeachingRecords(selectedCourse);
-        const termCodes = [...new Set(teachingRecords.map(record => record.term_code))];
+        // 從講師頁進入時，學期只列出「該講師教過這門課」的學期（合併列 "A / B" 以成員包含比對）
+        const relevantRecords = (originPage === 'instructor' && preSelectedInstructor)
+          ? teachingRecords.filter(record => instructorNameMatches(record.instructor_name, preSelectedInstructor))
+          : teachingRecords;
+        const termCodes = [...new Set(relevantRecords.map(record => record.term_code))];
         
         // Batch load terms using cache
         const termsMap = await batchLoadTerms(termCodes);
@@ -1785,7 +1838,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
     };
 
     loadTerms();
-  }, [selectedCourse, t, toast, isPopulatingEditData]);
+  }, [selectedCourse, t, toast, isPopulatingEditData, originPage, preSelectedInstructor]);
 
   // Clear instructors when term changes
   useEffect(() => {
@@ -1813,7 +1866,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         setInstructorsLoading(true);
         // Use cached teaching records to avoid redundant API calls
         const teachingRecords = await getCachedTeachingRecords(selectedCourse);
-        const filteredRecords = teachingRecords.filter(record => record.term_code === selectedTerm);
+        // 排除「未知教師」（除非它是唯一選項）；已選取的未知教師（編輯舊評論／草稿）予以保留
+        const filteredRecords = filterOutUnknownInstructorRecords(
+          teachingRecords.filter(record => record.term_code === selectedTerm),
+          selectedInstructorsRef.current
+        );
         setAvailableInstructors(filteredRecords);
         
         // Remove any selected instructors that are not available for this course/term combination
@@ -2220,43 +2277,30 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   }, [instructorsMap, language]);
 
   const handleInstructorToggle = useCallback((instructorKey: string) => {
-    const [instructorName, sessionType] = instructorKey.split('|');
+    const [, sessionType] = instructorKey.split('|');
     const sessionSuffix = `|${sessionType}`;
-    // 是否為「從講師頁進入時鎖定的預選講師」所屬選項（合併列以成員包含比對）
-    const isPreSelectedKey = (key: string) =>
-      originPage === 'instructor' && !!preSelectedInstructor &&
-      instructorNameMatches(key.split('|')[0], preSelectedInstructor);
 
-    setSelectedInstructors(prev => {
-      if (prev.includes(instructorKey)) {
-        // 預選講師所屬選項不可取消
-        if (isPreSelectedKey(instructorKey)) {
-          toast({
-            title: t('common.error'),
-            description: t('review.cannotDeselectPreSelectedInstructor', { instructor: preSelectedInstructor }),
-            variant: 'destructive',
-          });
-          return prev; // Don't allow deselection
-        }
-        // Removing instructor
-        return prev.filter(key => key !== instructorKey);
-      } else {
-        // 每個 session_type 只能選一個選項（場次）：A、B、A/B 為三個獨立選項，僅能擇一。
-        // 選新的會取代同類型的舊選擇（單選行為）。
-        const sameTypeSelected = prev.filter(key => key.endsWith(sessionSuffix));
-        // 若同類型已選的是被鎖定的預選講師選項，不可切換掉
-        if (sameTypeSelected.some(isPreSelectedKey)) {
-          toast({
-            title: t('common.error'),
-            description: t('review.cannotDeselectPreSelectedInstructor', { instructor: preSelectedInstructor }),
-            variant: 'destructive',
-          });
-          return prev;
-        }
-        return [...prev.filter(key => !key.endsWith(sessionSuffix)), instructorKey];
-      }
-    });
-  }, [originPage, preSelectedInstructor, toast, t]);
+    const nextSelection = selectedInstructors.includes(instructorKey)
+      // Removing instructor
+      ? selectedInstructors.filter(key => key !== instructorKey)
+      // 每個 session_type 只能選一個選項（場次）：A、B、A/B 為三個獨立選項，僅能擇一。
+      // 選新的會取代同類型的舊選擇（單選行為）。
+      : [...selectedInstructors.filter(key => !key.endsWith(sessionSuffix)), instructorKey];
+
+    // 從講師頁進入時，預選講師只需在「講課或導修其中一個場次」保持選取即可（毋須兩者皆有），
+    // 但不能全部取消，否則這則評論就與該講師無關了。
+    if (originPage === 'instructor' && preSelectedInstructor &&
+        !nextSelection.some(key => instructorNameMatches(key.split('|')[0], preSelectedInstructor))) {
+      toast({
+        title: t('common.error'),
+        description: t('review.cannotDeselectPreSelectedInstructor', { instructor: preSelectedInstructor }),
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setSelectedInstructors(nextSelection);
+  }, [selectedInstructors, originPage, preSelectedInstructor, toast, t]);
 
   const validateForm = useCallback(async (): Promise<boolean> => {
     // 檢查基本選擇（講師為選填：未選講師時提交「僅課程」評論，之後可編輯補評）
@@ -2812,9 +2856,11 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
                               {instructors.map((record, index) => {
                                 const instructorKey = `${record.instructor_name}|${record.session_type}`;
                                 const isSelected = selectedInstructors.includes(instructorKey);
-                                // 從講師頁面進入時的預選講師不可取消；其餘皆可自由複選
-                                const isLocked = originPage === 'instructor' && preSelectedInstructor &&
-                                                 instructorKey.startsWith(preSelectedInstructor + '|') && isSelected;
+                                // 從講師頁面進入時，預選講師「最後一個」已選場次不可取消
+                                // （講課／導修任一保持選取即可，毋須兩者皆有）；其餘皆可自由複選
+                                const isLocked = isSelected &&
+                                                 preSelectedSelectedKeys.length === 1 &&
+                                                 preSelectedSelectedKeys[0] === instructorKey;
 
                                 return (
                                   <label
