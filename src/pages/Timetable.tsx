@@ -46,6 +46,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 import { Calendar } from '@/components/ui/calendar';
 import { format as formatDate, parseISO } from 'date-fns';
 import { enUS, zhTW, zhCN } from 'date-fns/locale';
@@ -91,6 +92,12 @@ const STORAGE_KEY = 'timetable.selectedSectionIds';
 const EXPORT_OPTS_KEY = 'timetable.exportOptions';
 const CUSTOM_TITLES_KEY = 'timetable.customTitles';
 const MAX_RESULTS = 80;
+
+// Keyboard-shortcut hints use the platform's own symbols (⌘/⇧ on Mac).
+const IS_MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgent);
+const SHORTCUT_SEARCH = IS_MAC ? '⌘F' : 'Ctrl+F';
+const SHORTCUT_UNDO = IS_MAC ? '⌘Z' : 'Ctrl+Z';
+const SHORTCUT_REDO = IS_MAC ? '⇧⌘Z' : 'Ctrl+Shift+Z';
 
 interface ExportOptions {
   // Timetable options (affect on-screen preview + export)
@@ -594,6 +601,7 @@ const Timetable = () => {
   // to scroll, so users can browse more results even when only a few sections are
   // selected (a short timetable). Desktop only; recomputed on resize/layout.
   const resultsRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [resultsMinH, setResultsMinH] = useState<number | undefined>(undefined);
   useEffect(() => {
     const recompute = () => {
@@ -697,15 +705,36 @@ const Timetable = () => {
     return () => obs.disconnect();
   }, []);
 
-  // Keyboard shortcuts: Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z or Ctrl+Y to redo.
-  // Ignored while typing in an input/textarea so native text-undo still works.
+  // Keyboard shortcuts: Ctrl/Cmd+Z to undo, Ctrl/Cmd+Shift+Z or Ctrl+Y to redo,
+  // Ctrl/Cmd+F to focus the smart search box (instead of the browser find bar).
+  // Undo/redo are ignored while typing in an input/textarea so native text-undo
+  // still works.
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey)) return;
+      const key = e.key.toLowerCase();
+      if (key === 'f' && !e.shiftKey) {
+        e.preventDefault();
+        // The search box lives in the left panel, which may be collapsed. Expand
+        // it first, then wait for the input to actually be laid out before
+        // focusing — a hidden element cannot take focus.
+        setPanelCollapsed(false);
+        let attempts = 0;
+        const focusSearch = () => {
+          const input = searchInputRef.current;
+          if (input && input.offsetParent !== null) {
+            input.focus();
+            input.select();
+          } else if (attempts++ < 10) {
+            requestAnimationFrame(focusSearch);
+          }
+        };
+        requestAnimationFrame(focusSearch);
+        return;
+      }
       const el = e.target as HTMLElement | null;
       const tag = el?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || el?.isContentEditable) return;
-      const key = e.key.toLowerCase();
       if (key === 'z' && !e.shiftKey) {
         e.preventDefault();
         undoSelection();
@@ -1359,25 +1388,36 @@ const Timetable = () => {
   // use the full action row (see the lg: visibility toggles below).
   const actionButtons = (
     <>
-      {/* Undo / redo the selection. */}
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={undoSelection}
-        disabled={!canUndo}
-        title={t('timetable.undo')}
+      {/* Undo / redo the selection. The tooltip doubles as the discovery hint
+          for the keyboard shortcut; on mobile a tap just runs the action. */}
+      <ResponsiveTooltip
+        content={`${t('timetable.undo')} (${SHORTCUT_UNDO})`}
+        disableMobilePopup
       >
-        <Undo2 className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={redoSelection}
-        disabled={!canRedo}
-        title={t('timetable.redo')}
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={undoSelection}
+          disabled={!canUndo}
+          aria-label={`${t('timetable.undo')} (${SHORTCUT_UNDO})`}
+        >
+          <Undo2 className="h-4 w-4" />
+        </Button>
+      </ResponsiveTooltip>
+      <ResponsiveTooltip
+        content={`${t('timetable.redo')} (${SHORTCUT_REDO})`}
+        disableMobilePopup
       >
-        <Redo2 className="h-4 w-4" />
-      </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={redoSelection}
+          disabled={!canRedo}
+          aria-label={`${t('timetable.redo')} (${SHORTCUT_REDO})`}
+        >
+          <Redo2 className="h-4 w-4" />
+        </Button>
+      </ResponsiveTooltip>
       {/* Timetable options — these update the on-screen preview instantly */}
       <Popover>
         <PopoverTrigger asChild>
@@ -1818,11 +1858,19 @@ const Timetable = () => {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
+                  ref={searchInputRef}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder={t('timetable.smartSearch')}
-                  className="pl-9 h-9"
+                  className="pl-9 pr-16 h-9"
                 />
+                {/* Shortcut hint — keyboards only, and it steps aside once the
+                    user starts typing so it never covers their query. */}
+                {!searchTerm && (
+                  <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 hidden md:inline-flex items-center rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    {SHORTCUT_SEARCH}
+                  </kbd>
+                )}
               </div>
               {/* Show/hide results that would clash with the current timetable
                   (the ones marked with a red border). */}
