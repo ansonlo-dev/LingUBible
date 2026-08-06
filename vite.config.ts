@@ -76,6 +76,10 @@ export default defineConfig(({ command, mode }) => {
               // import in PdfViewerDialog — keep it in its own chunk so it loads
               // on demand instead of bloating the eager vendor bundle.
               if (id.includes('@embedpdf')) return 'pdf-viewer';
+              // react-share 同樣只由 ShareSheet 的動態 import 拉進來，而且它
+              // 沒有標 sideEffects（25 個社群圖示全都搖不掉），留在 vendor 會
+              // 讓每次首屏都白背這包，因此獨立成一個按需載入的分塊。
+              if (id.includes('react-share')) return 'share';
               if (id.includes('@radix-ui') || id.includes('lucide-react')) return 'ui';
               return 'vendor';
             }

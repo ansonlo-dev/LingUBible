@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
+import { ShareButton } from '@/components/common/ShareButton';
 import { cn } from '@/lib/utils';
 import { getGPA } from '@/utils/gradeUtils';
 import {
@@ -653,6 +654,13 @@ const GpaHons = () => {
       <div className="mb-4 flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-5">
         <div className="flex items-center gap-2">
           <h1 className="text-3xl font-bold">{t('gpaHons.title')}</h1>
+          <ShareButton
+            title={`${t('gpaHons.title')} · LingUBible`}
+            description={t('gpaHons.subtitle')}
+            text={t('share.text.gpaHons')}
+            hashtags={['LingUBible', 'LingnanU']}
+            variant="ghost"
+          />
         </div>
         <p className="text-muted-foreground md:-translate-y-[3px]">{t('gpaHons.subtitle')}</p>
         <span className="flex items-center gap-1 text-xs text-muted-foreground md:ml-auto md:-translate-y-[3px]">

@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
 import { DocumentHead } from '@/components/common/DocumentHead';
+import { ShareButton } from '@/components/common/ShareButton';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -661,8 +662,15 @@ export default function Calendar() {
 
       {/* Header */}
       <div className="mb-4 flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-5">
-        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <h1 className="text-2xl font-bold sm:text-3xl">{t('calendar.title')}</h1>
+          <ShareButton
+            title={`${t('calendar.title')} ${ACADEMIC_YEAR_LABEL} · LingUBible`}
+            description={t('calendar.subtitle')}
+            text={t('share.text.calendar')}
+            hashtags={['LingUBible', 'LingnanU']}
+            variant="ghost"
+          />
         </div>
         <p className="text-sm text-muted-foreground sm:text-base md:-translate-y-[3px]">
           {t('calendar.subtitle')}

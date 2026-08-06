@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { ShareButton } from '@/components/common/ShareButton';
 import { useLanguage } from '@/hooks/useLanguage';
 import { getCurrentTermCode } from '@/utils/dateUtils';
 import { 
@@ -571,8 +572,16 @@ const InstructorsList = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto px-4 py-8 max-sm:pt-4">
-        {/* 頁面標題 */}
-        <HeaderSection />
+        {/* 頁面標題 — 分享鍵放在 HeaderSection 外面，理由同 Courses.tsx */}
+        <div className="flex items-center justify-center gap-2">
+          <HeaderSection />
+          <ShareButton
+            title={`${t('pages.instructors.title')} · LingUBible`}
+            text={t('share.text.instructors')}
+            hashtags={['LingUBible', 'LingnanU']}
+            variant="ghost"
+          />
+        </div>
 
         {/* 高級篩選器 */}
         <div className="mt-2">

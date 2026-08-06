@@ -55,6 +55,7 @@ import { Pagination } from '@/components/features/reviews/Pagination';
 import { getCourseTitle, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting, getFacultiesForMultiDepartment, getFormattedInstructorName } from '@/utils/textUtils';
 import { getCurrentTermName, getCurrentTermCode, isCurrentTerm } from '@/utils/dateUtils';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
+import { ShareButton } from '@/components/common/ShareButton';
 import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsibleSection';
 import GradeDistributionChart from '@/components/features/reviews/GradeDistributionChart';
 import { calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
@@ -1965,6 +1966,21 @@ const CourseDetail = () => {
   const seoReviewCount = courseStats?.reviewCount ?? 0;
   const seoRating = courseStats?.averageRating > 0 ? courseStats.averageRating.toFixed(1) : null;
 
+  // 分享用文案：跟著介面語言走，而不是像 SEO 那樣固定用中文
+  const shareCourseName =
+    (language === 'zh-TW' ? course.course_title_tc : language === 'zh-CN' ? course.course_title_sc : '') ||
+    course.course_title;
+  const shareTitle = `${course.course_code} ${shareCourseName} · LingUBible`;
+  const shareDescription = [
+    course.department ? translateDepartmentName(course.department, t) : '',
+    seoReviewCount > 0
+      ? `${seoReviewCount} ${t('card.reviews')}${seoRating ? ` · ${seoRating}/5` : ''}`
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const shareText = t('share.text.course', { code: course.course_code, name: shareCourseName });
+
   return (
     <div className="mx-auto px-4 lg:px-8 xl:px-16 py-6 pb-20 overflow-hidden min-w-0">
       <DocumentHead
@@ -2015,6 +2031,13 @@ const CourseDetail = () => {
                     itemId={course.course_code}
                     size="lg"
                     showText={true}
+                    variant="outline"
+                  />
+                  <ShareButton
+                    title={shareTitle}
+                    description={shareDescription}
+                    text={shareText}
+                    hashtags={['LingUBible', 'LingnanU']}
                     variant="outline"
                   />
                   <Button
@@ -2128,6 +2151,14 @@ const CourseDetail = () => {
                     className="w-full"
                   />
                 </div>
+                <ShareButton
+                  title={shareTitle}
+                  description={shareDescription}
+                  text={shareText}
+                  hashtags={['LingUBible', 'LingnanU']}
+                  variant="outline"
+                  className="shrink-0"
+                />
                 <div className="flex-1">
                   <Button
                     className={cn(

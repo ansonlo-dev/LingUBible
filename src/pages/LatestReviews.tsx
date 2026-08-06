@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { Link, useNavigate } from 'react-router-dom';
+import { ShareButton } from '@/components/common/ShareButton';
 import {
   MessageSquare,
   Loader2,
@@ -337,6 +338,13 @@ const LatestReviews = () => {
               {t('latestReviews.totalReviews', { count: total })}
             </span>
           )}
+          <ShareButton
+            title={`${t('latestReviews.title')} · LingUBible`}
+            description={t('latestReviews.subtitle')}
+            text={t('share.text.reviews')}
+            hashtags={['LingUBible', 'LingnanU']}
+            variant="ghost"
+          />
         </div>
         <p className="text-muted-foreground">{t('latestReviews.subtitle')}</p>
         <p className="text-sm text-muted-foreground">

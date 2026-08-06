@@ -60,6 +60,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLoginRequired } from '@/contexts/LoginRequiredContext';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
+import { ShareButton } from '@/components/common/ShareButton';
 import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsibleSection';
 import GradeDistributionChart from '@/components/features/reviews/GradeDistributionChart';
 import { calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
@@ -1672,6 +1673,30 @@ const Lecturers = () => {
   const seoTeachingScore =
     detailedStats.averageTeachingQuality > 0 ? detailedStats.averageTeachingQuality.toFixed(1) : null;
 
+  // 分享用文案：跟著介面語言走，而不是像 SEO 那樣固定用中文
+  const shareInstructorName = instructor
+    ? getFormattedInstructorName(
+        {
+          name: instructor.name,
+          name_tc: instructor.name_tc,
+          name_sc: instructor.name_sc,
+          title: instructor.title,
+          nickname: instructor.nickname,
+        },
+        language,
+      ).primary
+    : '';
+  const shareTitle = `${shareInstructorName} · LingUBible`;
+  const shareDescription = [
+    instructor?.department ? translateDepartmentName(instructor.department, t) : '',
+    reviews.length > 0
+      ? `${reviews.length} ${t('card.reviews')}${seoTeachingScore ? ` · ${seoTeachingScore}/5` : ''}`
+      : '',
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  const shareText = t('share.text.instructor', { name: shareInstructorName });
+
   return (
     <div className="mx-auto px-4 lg:px-8 xl:px-16 py-6 pb-20 overflow-hidden min-w-0">
       {instructor && (
@@ -1731,6 +1756,13 @@ const Lecturers = () => {
                     itemId={instructor.name}
                     size="lg"
                     showText={true}
+                    variant="outline"
+                  />
+                  <ShareButton
+                    title={shareTitle}
+                    description={shareDescription}
+                    text={shareText}
+                    hashtags={['LingUBible', 'LingnanU']}
                     variant="outline"
                   />
                   <Button
@@ -1821,6 +1853,14 @@ const Lecturers = () => {
                       className="w-full"
                     />
                   </div>
+                  <ShareButton
+                    title={shareTitle}
+                    description={shareDescription}
+                    text={shareText}
+                    hashtags={['LingUBible', 'LingnanU']}
+                    variant="outline"
+                    className="shrink-0"
+                  />
                   <div className="flex-1">
                     <Button
                       className="h-10 gradient-primary hover:opacity-90 text-white w-full"

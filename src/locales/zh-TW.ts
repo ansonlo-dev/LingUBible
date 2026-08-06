@@ -967,6 +967,34 @@ export default {
   'favorites.browseCourses': '瀏覽課程',
   'favorites.browseInstructors': '瀏覽講師',
 
+  // Share
+  'share.share': '分享',
+  'share.tooltip': '分享此頁面',
+  'share.dialogTitle': '分享',
+  'share.dialogDescription': '把這一頁傳給朋友，或直接複製連結。',
+  'share.message': '訊息',
+  'share.messageHint': 'Facebook 與 LinkedIn 會自行從連結產生預覽，你寫的訊息只會出現在支援的應用程式裡。',
+  'share.reset': '重設',
+  'share.email': '電郵',
+  'share.moreApps': '更多',
+  'share.linkLabel': '要分享的連結',
+  'share.copy': '複製',
+  'share.copiedShort': '已複製',
+  'share.copied': '已複製連結',
+  'share.copiedDescription': '連結已在剪貼簿，貼到任何地方即可。',
+  'share.copyFailed': '無法複製連結',
+  'share.copyFailedDescription': '瀏覽器阻擋了剪貼簿存取，請選取連結後手動複製。',
+  'share.instagramCopied': '已為 Instagram 複製連結',
+  'share.instagramCopiedDescription': 'Instagram 沒有直接分享連結，請貼到限時動態、私訊或個人簡介。',
+  'share.text.course': '在 LingUBible 看看 {code} {name} — 真實學生評價、評分與成績分佈。',
+  'share.text.instructor': '在 LingUBible 看看 {name} — 真實學生評分與課程評價。',
+  'share.text.planner': '用 LingUBible 排嶺大時間表 — 搜尋時段、偵測衝堂，還可匯出行事曆。',
+  'share.text.calendar': '在 LingUBible 查嶺大學年行事曆 — 學期日期、加退選期限、考試週與假期。',
+  'share.text.gpaHons': '用 LingUBible 計算機算出你的嶺大 GPA 與畢業榮譽等級。',
+  'share.text.courses': '在 LingUBible 瀏覽嶺大所有課程 — 學生評分、難度、工作量與成績分佈。',
+  'share.text.instructors': '在 LingUBible 瀏覽嶺大所有講師 — 教學評分、評分公平度與學生評價。',
+  'share.text.reviews': '在 LingUBible 看最新的嶺大課程與講師評價。',
+
   // =============================================================================
   // 4. SEARCH & FILTERING - 搜索與過濾
   // =============================================================================

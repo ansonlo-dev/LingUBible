@@ -1029,6 +1029,34 @@ export default {
   'favorites.browseCourses': 'Browse Courses',
   'favorites.browseInstructors': 'Browse Instructors',
 
+  // Share
+  'share.share': 'Share',
+  'share.tooltip': 'Share this page',
+  'share.dialogTitle': 'Share',
+  'share.dialogDescription': 'Send this page to your friends, or copy the link.',
+  'share.message': 'Message',
+  'share.messageHint': 'Facebook and LinkedIn build the preview from the link itself, so your message is only used where the app allows it.',
+  'share.reset': 'Reset',
+  'share.email': 'Email',
+  'share.moreApps': 'More',
+  'share.linkLabel': 'Link to share',
+  'share.copy': 'Copy',
+  'share.copiedShort': 'Copied',
+  'share.copied': 'Link copied',
+  'share.copiedDescription': 'The link is on your clipboard — paste it anywhere.',
+  'share.copyFailed': 'Could not copy the link',
+  'share.copyFailedDescription': 'Your browser blocked clipboard access. Select the link and copy it manually.',
+  'share.instagramCopied': 'Link copied for Instagram',
+  'share.instagramCopiedDescription': 'Instagram has no direct share link — paste it into a story, DM or your bio.',
+  'share.text.course': 'Check out {code} {name} on LingUBible — real student reviews, ratings and grade distributions.',
+  'share.text.instructor': 'Check out {name} on LingUBible — real student ratings and course reviews.',
+  'share.text.planner': 'Plan your Lingnan timetable with LingUBible — search sections, catch clashes and export to your calendar.',
+  'share.text.calendar': 'Check the Lingnan academic calendar on LingUBible — term dates, add/drop deadlines, exams and holidays.',
+  'share.text.gpaHons': 'Work out your Lingnan GPA and honours classification with the LingUBible calculator.',
+  'share.text.courses': 'Browse every Lingnan course on LingUBible — student ratings, difficulty, workload and grade distributions.',
+  'share.text.instructors': 'Browse every Lingnan lecturer on LingUBible — teaching ratings, grading fairness and student reviews.',
+  'share.text.reviews': 'Read the latest Lingnan course and lecturer reviews on LingUBible.',
+
   // =============================================================================
   // 4. SEARCH & FILTERING - 搜索與過濾
   // =============================================================================

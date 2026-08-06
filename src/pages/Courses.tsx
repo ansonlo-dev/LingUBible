@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useSearchParams } from 'react-router-dom';
+import { ShareButton } from '@/components/common/ShareButton';
 import { getCurrentTermCode } from '@/utils/dateUtils';
 import { PopularItemCard } from '@/components/features/reviews/PopularItemCard';
 import { CourseCardSkeleton } from '@/components/features/reviews/CourseCardSkeleton';
@@ -663,8 +664,18 @@ const Courses = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <div className="container mx-auto px-4 py-8 max-sm:pt-4">
-        {/* 頁面標題 */}
-        <HeaderSection />
+        {/* 頁面標題 — 分享鍵刻意放在 HeaderSection 外面：HeaderSection 是在
+            render 裡定義的內嵌元件，每次重繪都會換一個型別而整段重新掛載，
+            放進去的話分享對話框一開就會被關掉 */}
+        <div className="flex items-center justify-center gap-2">
+          <HeaderSection />
+          <ShareButton
+            title={`${t('pages.courses.title')} · LingUBible`}
+            text={t('share.text.courses')}
+            hashtags={['LingUBible', 'LingnanU']}
+            variant="ghost"
+          />
+        </div>
 
         {/* 高級篩選器 */}
         <div className="mt-2">

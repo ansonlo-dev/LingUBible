@@ -1037,6 +1037,34 @@ export default {
   'favorites.browseCourses': '浏览课程',
   'favorites.browseInstructors': '浏览讲师',
 
+  // Share
+  'share.share': '分享',
+  'share.tooltip': '分享此页面',
+  'share.dialogTitle': '分享',
+  'share.dialogDescription': '把这一页传给朋友，或直接复制链接。',
+  'share.message': '信息',
+  'share.messageHint': 'Facebook 与 LinkedIn 会自行从链接生成预览，你写的信息只会出现在支持的应用里。',
+  'share.reset': '重置',
+  'share.email': '邮件',
+  'share.moreApps': '更多',
+  'share.linkLabel': '要分享的链接',
+  'share.copy': '复制',
+  'share.copiedShort': '已复制',
+  'share.copied': '已复制链接',
+  'share.copiedDescription': '链接已在剪贴板，粘贴到任何地方即可。',
+  'share.copyFailed': '无法复制链接',
+  'share.copyFailedDescription': '浏览器阻止了剪贴板访问，请选中链接后手动复制。',
+  'share.instagramCopied': '已为 Instagram 复制链接',
+  'share.instagramCopiedDescription': 'Instagram 没有直接分享链接，请粘贴到快拍、私信或个人简介。',
+  'share.text.course': '在 LingUBible 看看 {code} {name} — 真实学生评价、评分与成绩分布。',
+  'share.text.instructor': '在 LingUBible 看看 {name} — 真实学生评分与课程评价。',
+  'share.text.planner': '用 LingUBible 排岭大时间表 — 搜索时段、检测冲堂，还能导出日历。',
+  'share.text.calendar': '在 LingUBible 查岭大学年校历 — 学期日期、加退选期限、考试周与假期。',
+  'share.text.gpaHons': '用 LingUBible 计算器算出你的岭大 GPA 与毕业荣誉等级。',
+  'share.text.courses': '在 LingUBible 浏览岭大所有课程 — 学生评分、难度、工作量与成绩分布。',
+  'share.text.instructors': '在 LingUBible 浏览岭大所有讲师 — 教学评分、评分公平度与学生评价。',
+  'share.text.reviews': '在 LingUBible 看最新的岭大课程与讲师评价。',
+
   // =============================================================================
   // 4. SEARCH & FILTERING - 搜索與過濾
   // =============================================================================

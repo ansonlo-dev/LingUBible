@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useEnhancedResponsive } from '@/hooks/useEnhancedResponsive';
+import { ShareButton } from '@/components/common/ShareButton';
 import {
   loadTimetableSections,
   findConflicts,
@@ -1811,6 +1812,13 @@ const Timetable = () => {
       <div className="mb-6 flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-5">
         <div className="flex items-center gap-2">
           <h1 className="text-3xl font-bold">{t('timetable.title')}</h1>
+          <ShareButton
+            title={`${t('timetable.title')} · LingUBible`}
+            description={t('timetable.subtitle')}
+            text={t('share.text.planner')}
+            hashtags={['LingUBible', 'LingnanU']}
+            variant="ghost"
+          />
         </div>
         <p className="text-muted-foreground md:-translate-y-[3px]">{t('timetable.subtitle')}</p>
         <div className="flex flex-col gap-0.5 md:ml-auto md:items-end md:-translate-y-[3px]">
