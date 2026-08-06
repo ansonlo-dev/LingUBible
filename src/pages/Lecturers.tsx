@@ -1236,7 +1236,7 @@ const Lecturers = () => {
   const renderBooleanBadge = (value: boolean, label: string, filterKey: keyof CourseRequirementsFilters) => {
     return (
       <ResponsiveTooltip 
-        content={t('filter.clickToFilterRequirement', { requirement: label })}
+        content={t(value ? 'filter.clickToFilterRequirementHas' : 'filter.clickToFilterRequirementNo', { requirement: label })}
         hasClickAction={true}
         clickActionText={t('tooltip.clickAgainToFilter')}
         disableMobilePopup={true}

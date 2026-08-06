@@ -635,7 +635,7 @@ export const CourseReviewsList = ({
     const key = `requirement-${filterKey}-${hasRequirement ? 'has' : 'no'}-${uniqueSuffix}`;
     return (
       <ResponsiveTooltip 
-        content={t('filter.clickToFilterRequirement', { requirement: label })}
+        content={t(hasRequirement ? 'filter.clickToFilterRequirementHas' : 'filter.clickToFilterRequirementNo', { requirement: label })}
         hasClickAction={true}
         clickActionText={isMobile ? t('tooltip.clickAgainToFilter') : undefined}
         disableMobilePopup={true}
