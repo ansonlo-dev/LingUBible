@@ -10,6 +10,7 @@ import { TechnologyNetworkAnimation } from "@/components/features/animations/Tec
 import { BookText, Users, Star, TrendingUp, Loader2, UserCheck, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WingedButton } from '@/components/ui/winged-button';
+import { PlayStoreDownloadButton } from '@/components/common/PlayStoreDownloadButton';
 import { HeavenTransition } from '@/components/ui/heaven-transition';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
@@ -334,15 +335,18 @@ const Index = () => {
               </div>
               
               {/* CTA Button */}
-              <div className="relative z-50 mb-8 lg:mb-0" style={{ zIndex: 9999 }}>
-                <WingedButton 
-                  size="lg" 
+              <div className={`relative z-50 mb-8 lg:mb-0 flex flex-wrap items-center gap-4 ${
+                isMobileLandscape || shouldUseDesktopLayout ? 'justify-start' : 'justify-center lg:justify-start'
+              }`} style={{ zIndex: 9999 }}>
+                <WingedButton
+                  size="lg"
                   className="gradient-primary-shine hover:opacity-90 text-white font-bold px-8 relative z-50"
                   onClick={handleGetStartedClick}
                   style={{ zIndex: 9999 }}
                 >
                   {user ? t('hero.explore') : t('hero.getStarted')}
                 </WingedButton>
+                <PlayStoreDownloadButton />
               </div>
 
               {/* Mobile Animation - Below Button (hide on mobile landscape and tablet portrait) */}
