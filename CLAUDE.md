@@ -41,7 +41,20 @@ Provider nesting (outer → inner): `QueryClientProvider` → `TooltipProvider` 
 **This 7000-line static-method `CourseService` class is the heart of the app.** Nearly all domain data (courses, instructors, reviews, review votes, teaching records, terms) flows through it. Domain TypeScript interfaces (`Course`, `Instructor`, `Review`, `TeachingRecord`, `Term`, `InstructorDetail`, `*WithStats`, …) are defined at the top of this file. Custom hooks in `src/hooks/` wrap it for components (`useCoursesWithStats`, `useInstructorsWithStats`, `useCourseDetailOptimized`, etc.; "Optimized" / landing-page variants fetch lighter slices).
 
 ### Appwrite backend
-Client setup in `src/lib/appwrite.ts` exports `account`, `databases`, and `tablesDB`. The codebase is **migrating from the legacy Databases API to the newer TablesDB API** (recent commits) — prefer `tablesDB` for new data access. Main database id is `lingubible` with collections `courses`, `reviews`, `review_votes`, `teaching_records`, `instructors`, `terms`. Separate databases (declared in `appwrite.json`): `user-stats-db`, `verification_system` (`verification_codes`, `password_resets`). `appwrite.json` is the source of truth for project/function/collection config.
+Client setup in `src/lib/appwrite.ts` exports `account`, `databases`, and `tablesDB`. The codebase is **migrating from the legacy Databases API to the newer TablesDB API** (recent commits) — prefer `tablesDB` for new data access. Main database id is `lingubible` with collections `courses`, `reviews`, `review_votes`, `teaching_records`, `instructors`, `terms`, `course_offerings`. Separate databases (declared in `appwrite.json`): `user-stats-db`, `verification_system` (`verification_codes`, `password_resets`). `appwrite.json` is the source of truth for project/function/collection config.
+
+#### `course_offerings` — seat quota / enrolment
+Read-only static data imported from the university's Banner class listing (`merged_classes.json`, one record per CRN section). Rows come in two grains, distinguished by `scope`:
+- `scope='course'` — one row per (course, term): the whole course's quota / enrolment for that term. Lecture and tutorial sections enrol the *same* students, so the total is taken from a single session type (priority Lecture → Seminar → Tutorial → Project) rather than summed across them.
+- `scope='instructor'` — one row per (course, term, session_type, instructor): matches the teaching-record badge grain on the course and instructor pages. Co-taught `"A / B"` sections are expanded so each instructor gets the section's numbers; instructors absent from the `instructors` table are stored as `UNKNOWN`, mirroring what the pages render.
+
+Read via `CourseService.getCourseOfferings(courseCode)` / `getInstructorOfferings(instructorName)` — one indexed query each, cached passively for 6h, so a course or instructor page costs at most one extra request per 6h. Coverage is ~95% of teaching records (the rest are course-terms the source data never listed); missing entries simply render no seat badge.
+
+Re-import after refreshing the source file:
+```bash
+bun run import:offerings -- [--dry-run] <merged_classes.json>
+```
+The script is idempotent (deterministic row IDs) and creates the table/columns/indexes if absent.
 
 ### ⚠️ Caching is PASSIVE only (no background refresh)
 The original quota exhaustion came from **background refresh loops (setInterval polling)**, not from caching itself. Caching is now active but strictly **passive**: entries are populated on demand and served until their TTL expires, then the next caller re-fetches live. **Never reintroduce any `setInterval` / background refresh / polling that re-fetches into the cache** — that is the specific thing that blew the free-plan request quota.

@@ -382,6 +382,16 @@ export default {
   'sessionType.project': 'Project',
   'sessionType.seminar': 'Seminar',
   'sessionType.unknown': 'Unknown',
+
+  // Seat quota / enrolment (course_offerings)
+  'seats.title': 'Seats',
+  'seats.capacity': 'Quota',
+  'seats.enrolled': 'Enrolled',
+  'seats.remaining': 'Remaining',
+  'seats.fillRate': 'Filled',
+  'seats.sections': 'Sections',
+  'seats.overviewTitle': 'Enrolment by term',
+  'seats.overviewHint': 'enrolled / quota',
   // Session types for review cards (same as above for English)
   'sessionTypeBadge.lecture': 'Lecture',
   'sessionTypeBadge.tutorial': 'Tutorial',

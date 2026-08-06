@@ -1372,6 +1372,114 @@
             "indexes": []
         },
         {
+            "$id": "course_offerings",
+            "$permissions": [
+                "read(\"any\")"
+            ],
+            "databaseId": "lingubible",
+            "name": "course_offerings",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "scope",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 10,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "course_code",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "term_code",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "session_type",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 20,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "instructor_name",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 200,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "capacity",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 100000,
+                    "default": null
+                },
+                {
+                    "key": "enrolled",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 100000,
+                    "default": null
+                },
+                {
+                    "key": "sections",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": 0,
+                    "max": 10000,
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "course_code_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "course_code"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                },
+                {
+                    "key": "instructor_name_idx",
+                    "type": "key",
+                    "status": "available",
+                    "attributes": [
+                        "instructor_name"
+                    ],
+                    "orders": [
+                        "ASC"
+                    ]
+                }
+            ]
+        },
+        {
             "$id": "reviews",
             "$permissions": [
                 "create(\"any\")",

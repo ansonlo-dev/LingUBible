@@ -180,6 +180,55 @@ export interface CourseTeachingInfo {
   teachingLanguage: string; // Teaching language code from teaching records
 }
 
+/**
+ * 學額 / 收生記錄（course_offerings 表的一列）。
+ *
+ * 資料由官方選課系統的分班（CRN）資料聚合而成，分兩種粒度（scope）：
+ * - 'course'     ：每 (課程, 學期) 一列 = 整門課該學期的總學額 / 總收生。
+ *                  由於同一門課的 Lecture 與 Tutorial 收的是同一批學生，
+ *                  總量只取單一場次類型計算，不會把兩者相加而重複計數。
+ * - 'instructor' ：每 (課程, 學期, 場次類型, 個別講師) 一列，對應課程頁與
+ *                  講師頁教學記錄徽章的粒度。共同授課的分班會分別計入每位講師。
+ */
+export interface CourseOffering {
+  $id: string;
+  scope: 'course' | 'instructor';
+  course_code: string;
+  term_code: string;
+  session_type: string;    // scope='course' 時為空字串
+  instructor_name: string; // scope='course' 時為空字串；未公布講師為 'UNKNOWN'
+  capacity: number;        // 學額（各分班加總）
+  enrolled: number;        // 實際收生（各分班加總）
+  sections: number;        // 聚合了幾個分班（CRN）
+}
+
+/** 學額資料的前端查表結構。 */
+export type OfferingLookup = {
+  /** 整門課每學期的總量：key = term_code（僅課程頁會有內容） */
+  byTerm: Map<string, CourseOffering>;
+  /** 各講師 / 場次的量：key = offeringKey(...) */
+  bySession: Map<string, CourseOffering>;
+};
+
+/**
+ * 建立 bySession 的鍵。四個欄位全帶，讓課程頁（已知 courseCode）與
+ * 講師頁（已知 instructorName）可以共用同一份查表邏輯。
+ */
+export function offeringKey(
+  courseCode: string,
+  termCode: string,
+  sessionType: string,
+  instructorName: string
+): string {
+  return `${courseCode}|${termCode}|${sessionType}|${instructorName}`;
+}
+
+/** 收生率（0~1+）。學額為 0 時回傳 null，代表無法計算。 */
+export function offeringFillRate(offering: CourseOffering | undefined | null): number | null {
+  if (!offering || !offering.capacity) return null;
+  return offering.enrolled / offering.capacity;
+}
+
 export interface Review {
   $id: string;
   user_id: string;
@@ -272,6 +321,7 @@ export class CourseService {
   private static readonly TEACHING_RECORDS_COLLECTION_ID = 'teaching_records';
   private static readonly INSTRUCTORS_COLLECTION_ID = 'instructors';
   private static readonly TERMS_COLLECTION_ID = 'terms';
+  private static readonly COURSE_OFFERINGS_COLLECTION_ID = 'course_offerings';
 
   // 性能優化常數
   private static readonly MAX_COURSES_LIMIT = 2000; // 完整數據集限制
@@ -1540,6 +1590,110 @@ export class CourseService {
     } catch (error) {
       console.error('Error checking course offering:', error);
       return false;
+    }
+  }
+
+  /**
+   * 🎟️ 學額 / 收生資料（course_offerings）
+   *
+   * 這張表是唯讀的靜態資料：只有匯入官方選課系統資料時才會變動，
+   * 因此用「被動」持久化快取（6 小時 TTL）保存，重複瀏覽同一課程 /
+   * 講師頁不會再打 Appwrite。整個課程頁 / 講師頁各只多出 1 次查詢。
+   *
+   * ⚠️ 絕不加背景刷新 / setInterval —— 見 CLAUDE.md 的快取原則。
+   */
+  private static readonly OFFERINGS_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 小時
+
+  /** 把 course_offerings 列轉成兩個查表用的 Map。 */
+  private static buildOfferingLookup(rows: CourseOffering[]): OfferingLookup {
+    const byTerm = new Map<string, CourseOffering>();
+    const bySession = new Map<string, CourseOffering>();
+    for (const row of rows) {
+      if (row.scope === 'course') {
+        byTerm.set(row.term_code, row);
+      } else {
+        bySession.set(
+          offeringKey(row.course_code, row.term_code, row.session_type, row.instructor_name),
+          row
+        );
+      }
+    }
+    return { byTerm, bySession };
+  }
+
+  private static readonly OFFERING_SELECT = [
+    '$id', 'scope', 'course_code', 'term_code', 'session_type', 'instructor_name',
+    'capacity', 'enrolled', 'sections'
+  ];
+
+  /**
+   * 取得某門課的所有學額記錄（課程層級總量 + 各講師 / 場次的量）。
+   * 單一課程最多約 130 列，一次查詢即可取回。
+   */
+  static async getCourseOfferings(courseCode: string): Promise<OfferingLookup> {
+    const empty: OfferingLookup = { byTerm: new Map(), bySession: new Map() };
+    if (!courseCode) return empty;
+
+    const cacheKey = `course_offerings_${courseCode}`;
+    const cached = this.getPersistentCached<CourseOffering[]>(cacheKey);
+    if (cached) {
+      return this.buildOfferingLookup(cached);
+    }
+
+    try {
+      const response = await tablesDB.listRows(
+        this.DATABASE_ID,
+        this.COURSE_OFFERINGS_COLLECTION_ID,
+        [
+          Query.equal('course_code', courseCode),
+          Query.limit(500),
+          Query.select(this.OFFERING_SELECT)
+        ]
+      );
+
+      const rows = response.rows as unknown as CourseOffering[];
+      this.setPersistentCached(cacheKey, rows, this.OFFERINGS_CACHE_TTL, this.OFFERINGS_CACHE_TTL);
+      return this.buildOfferingLookup(rows);
+    } catch (error) {
+      // 學額只是附加資訊：查不到就不顯示，不應讓整個課程頁失敗
+      console.warn('Error fetching course offerings:', error);
+      return empty;
+    }
+  }
+
+  /**
+   * 取得某位講師的所有學額記錄（僅 scope='instructor' 的列）。
+   * 講師姓名以精確比對查詢：course_offerings 已在匯入時把共同授課的
+   * "A / B" 展開成個別講師列，因此不需要 Query.contains。
+   */
+  static async getInstructorOfferings(instructorName: string): Promise<OfferingLookup> {
+    const empty: OfferingLookup = { byTerm: new Map(), bySession: new Map() };
+    if (!instructorName || !instructorName.trim()) return empty;
+
+    const name = instructorName.trim();
+    const cacheKey = `instructor_offerings_${name}`;
+    const cached = this.getPersistentCached<CourseOffering[]>(cacheKey);
+    if (cached) {
+      return this.buildOfferingLookup(cached);
+    }
+
+    try {
+      const response = await tablesDB.listRows(
+        this.DATABASE_ID,
+        this.COURSE_OFFERINGS_COLLECTION_ID,
+        [
+          Query.equal('instructor_name', name),
+          Query.limit(1000),
+          Query.select(this.OFFERING_SELECT)
+        ]
+      );
+
+      const rows = response.rows as unknown as CourseOffering[];
+      this.setPersistentCached(cacheKey, rows, this.OFFERINGS_CACHE_TTL, this.OFFERINGS_CACHE_TTL);
+      return this.buildOfferingLookup(rows);
+    } catch (error) {
+      console.warn('Error fetching instructor offerings:', error);
+      return empty;
     }
   }
 

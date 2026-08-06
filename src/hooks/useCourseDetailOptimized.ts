@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CourseService, Course, CourseTeachingInfo, CourseReviewInfo } from '@/services/api/courseService';
+import { CourseService, Course, CourseTeachingInfo, CourseReviewInfo, OfferingLookup } from '@/services/api/courseService';
 import { useLanguage } from '@/hooks/useLanguage';
 
 interface CourseDetailData {
@@ -9,6 +9,8 @@ interface CourseDetailData {
     reviewCount: number;
   };
   teachingInfo: CourseTeachingInfo[];
+  /** 學額 / 收生資料（course_offerings），教學記錄徽章與學期總覽用 */
+  offerings: OfferingLookup;
   reviews: (CourseReviewInfo & { upvotes: number; downvotes: number; userVote?: 'up' | 'down' | null })[];
   allReviewsForChart: (CourseReviewInfo & { upvotes: number; downvotes: number; userVote?: 'up' | 'down' | null })[];
   isOfferedInCurrentTerm: boolean;
@@ -41,6 +43,7 @@ export const useCourseDetailOptimized = (
       reviewCount: 0
     },
     teachingInfo: [],
+    offerings: { byTerm: new Map(), bySession: new Map() },
     reviews: [],
     allReviewsForChart: [],
     isOfferedInCurrentTerm: false,
@@ -78,10 +81,14 @@ export const useCourseDetailOptimized = (
         // 不需另外打 getCourseStats / getCourseDetailedStatsOptimized /
         // isCourseOfferedInTerm 以及第二次的 reviews 查詢 —— 每次省下 ~3
         // 份 reviews 掃描（每份最多 300~500 列）與 1 份 teaching_records 查詢。
-        const [courseData, teachingInfoData, reviewsData] = await Promise.all([
+        // 學額資料（course_offerings）一併平行載入：這張表只在匯入官方
+        // 選課資料時變動，服務層以 6 小時被動快取保存，因此重複瀏覽同一
+        // 課程頁時不會再產生任何讀取。
+        const [courseData, teachingInfoData, reviewsData, offeringsData] = await Promise.all([
           CourseService.getCourseByCode(courseCode),
           CourseService.getCourseTeachingInfoOptimized(courseCode),
           CourseService.getCourseReviewsWithVotesOptimized(courseCode, userId),
+          CourseService.getCourseOfferings(courseCode),
         ]);
 
         const loadTime = Date.now() - startTime;
@@ -118,6 +125,7 @@ export const useCourseDetailOptimized = (
             reviewCount,
           },
           teachingInfo: teachingInfoData,
+          offerings: offeringsData,
           reviews: reviewsData,
           allReviewsForChart: reviewsData,
           isOfferedInCurrentTerm,

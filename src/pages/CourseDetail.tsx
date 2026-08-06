@@ -47,13 +47,15 @@ import { Query } from 'appwrite';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useCourseDetailOptimized } from '@/hooks/useCourseDetailOptimized';
+import { SeatsSegment, SeatsBadge, SeatsOverview } from '@/components/common/CourseSeats';
+import { offeringKey } from '@/services/api/courseService';
 import { DocumentHead } from '@/components/common/DocumentHead';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { CourseService, type Course, type CourseReviewInfo, type CourseTeachingInfo, type Instructor } from '@/services/api/courseService';
 import { CourseReviewsList } from '@/components/features/reviews/CourseReviewsList';
 import { Pagination } from '@/components/features/reviews/Pagination';
 import { getCourseTitle, translateDepartmentName, getTeachingLanguageName, extractInstructorNameForSorting, getFacultiesForMultiDepartment, getFormattedInstructorName } from '@/utils/textUtils';
-import { getCurrentTermName, getCurrentTermCode, isCurrentTerm } from '@/utils/dateUtils';
+import { getCurrentTermName, getCurrentTermCode, isCurrentTerm, compareTermCodesDesc } from '@/utils/dateUtils';
 import { FavoriteButton } from '@/components/ui/FavoriteButton';
 import { ShareButton } from '@/components/common/ShareButton';
 import { PersistentCollapsibleSection } from '@/components/ui/PersistentCollapsibleSection';
@@ -1035,6 +1037,16 @@ const CourseDetail = () => {
   // 解構數據
   const { course, courseStats, teachingInfo, reviews: allReviews, allReviewsForChart, isOfferedInCurrentTerm, detailedStats } = data;
 
+  // 🎟️ 學額 / 收生人數查表（course_offerings，與課程主檔同一批平行請求載入）
+  const { offerings } = data;
+  const getSeatOffering = React.useCallback(
+    (termCode: string, sessionType: string, instructorName: string) =>
+      offerings.bySession.get(
+        offeringKey(course?.course_code || courseCode || '', termCode, sessionType, instructorName)
+      ),
+    [offerings, course?.course_code, courseCode]
+  );
+
   // 收集課程描述與修讀要求中提及的課程代碼，批次抓取其名稱（含繁/簡），
   // 以便在代碼後附上課程名稱並建立連結。
   useEffect(() => {
@@ -1378,6 +1390,13 @@ const CourseDetail = () => {
     // Convert to array and sort by term code (descending)
     return Array.from(termCountMap.values())
       .sort((a, b) => b.term.term_code.localeCompare(a.term.term_code));
+  }, [teachingInfo]);
+
+  // 學額總覽用的學期清單（依時序新到舊；不可用字串排序，暑期會排錯位）
+  const seatsOverviewTerms = React.useMemo(() => {
+    const names = new Map<string, string>();
+    teachingInfo.forEach(info => names.set(info.term.term_code, info.term.name));
+    return { names, codes: Array.from(names.keys()).sort(compareTermCodesDesc) };
   }, [teachingInfo]);
 
   // 獲取所有可用的教學語言及其計數
@@ -2521,6 +2540,14 @@ const CourseDetail = () => {
         {/* Teaching Records Tab */}
         <TabsContent value="teaching" className="attached-tab-content mt-0">
           <div className="p-6 space-y-4">
+          {/* 🎟️ 各學期收生總覽：整門課該學期實際收了多少人 / 學額上限 */}
+          {!teachingInfoLoading && (
+            <SeatsOverview
+              byTerm={offerings.byTerm}
+              termNames={seatsOverviewTerms.names}
+              termCodes={seatsOverviewTerms.codes}
+            />
+          )}
           {teachingInfoLoading ? (
             <div className="text-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
@@ -3006,6 +3033,9 @@ const CourseDetail = () => {
                                           {teachingLanguage}
                                         </button>
                                       </ResponsiveTooltip>
+
+                                      {/* 學額 / 收生人數（徽章第三段） */}
+                                      <SeatsSegment offering={getSeatOffering(term.term_code, 'Lecture', instructorName)} />
                                     </div>
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
@@ -3029,6 +3059,12 @@ const CourseDetail = () => {
                                         {term.name}
                                       </button>
                                     </ResponsiveTooltip>
+                                  )}
+                                  {/* 沒有教學語言段落可附著時，學額改以獨立徽章顯示 */}
+                                  {!teachingLanguage && (
+                                    <span className="ml-1 inline-flex">
+                                      <SeatsBadge offering={getSeatOffering(term.term_code, 'Lecture', instructorName)} />
+                                    </span>
                                   )}
                                 </div>
                               );
@@ -3212,6 +3248,9 @@ const CourseDetail = () => {
                                           {teachingLanguage}
                                         </button>
                                       </ResponsiveTooltip>
+
+                                      {/* 學額 / 收生人數（徽章第三段） */}
+                                      <SeatsSegment offering={getSeatOffering(term.term_code, 'Tutorial', instructorName)} />
                                     </div>
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
@@ -3243,6 +3282,12 @@ const CourseDetail = () => {
                                         {term.name}
                                       </button>
                                     </ResponsiveTooltip>
+                                  )}
+                                  {/* 沒有教學語言段落可附著時，學額改以獨立徽章顯示 */}
+                                  {!teachingLanguage && (
+                                    <span className="ml-1 inline-flex">
+                                      <SeatsBadge offering={getSeatOffering(term.term_code, 'Tutorial', instructorName)} />
+                                    </span>
                                   )}
                                 </div>
                               );
@@ -3426,6 +3471,9 @@ const CourseDetail = () => {
                                           {teachingLanguage}
                                         </button>
                                       </ResponsiveTooltip>
+
+                                      {/* 學額 / 收生人數（徽章第三段） */}
+                                      <SeatsSegment offering={getSeatOffering(term.term_code, 'Project', instructorName)} />
                                     </div>
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
@@ -3457,6 +3505,12 @@ const CourseDetail = () => {
                                         {term.name}
                                       </button>
                                     </ResponsiveTooltip>
+                                  )}
+                                  {/* 沒有教學語言段落可附著時，學額改以獨立徽章顯示 */}
+                                  {!teachingLanguage && (
+                                    <span className="ml-1 inline-flex">
+                                      <SeatsBadge offering={getSeatOffering(term.term_code, 'Project', instructorName)} />
+                                    </span>
                                   )}
                                 </div>
                               );
@@ -3640,6 +3694,9 @@ const CourseDetail = () => {
                                           {teachingLanguage}
                                         </button>
                                       </ResponsiveTooltip>
+
+                                      {/* 學額 / 收生人數（徽章第三段） */}
+                                      <SeatsSegment offering={getSeatOffering(term.term_code, 'Seminar', instructorName)} />
                                     </div>
                                   ) : (
                                     // Fallback to term-only badge if no teaching language
@@ -3671,6 +3728,12 @@ const CourseDetail = () => {
                                         {term.name}
                                       </button>
                                     </ResponsiveTooltip>
+                                  )}
+                                  {/* 沒有教學語言段落可附著時，學額改以獨立徽章顯示 */}
+                                  {!teachingLanguage && (
+                                    <span className="ml-1 inline-flex">
+                                      <SeatsBadge offering={getSeatOffering(term.term_code, 'Seminar', instructorName)} />
+                                    </span>
                                   )}
                                 </div>
                               );

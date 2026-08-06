@@ -363,6 +363,16 @@ export default {
   'sessionType.project': '專題 (Project)',
   'sessionType.seminar': '研討 (Seminar)',
   'sessionType.unknown': '未知 (Unknown)',
+
+  // 學額 / 收生人數（course_offerings）
+  'seats.title': '學額狀況',
+  'seats.capacity': '學額',
+  'seats.enrolled': '已收生',
+  'seats.remaining': '餘額',
+  'seats.fillRate': '收生率',
+  'seats.sections': '分班數',
+  'seats.overviewTitle': '各學期收生情況',
+  'seats.overviewHint': '已收生 / 學額',
   // Session types for review cards (without brackets)
   'sessionTypeBadge.lecture': '講課',
   'sessionTypeBadge.tutorial': '導修',

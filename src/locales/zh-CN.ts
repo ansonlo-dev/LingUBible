@@ -372,6 +372,16 @@ export default {
   'sessionType.project': '专题 (Project)',
   'sessionType.seminar': '研讨 (Seminar)',
   'sessionType.unknown': '未知 (Unknown)',
+
+  // 学额 / 收生人数（course_offerings）
+  'seats.title': '学额状况',
+  'seats.capacity': '学额',
+  'seats.enrolled': '已收生',
+  'seats.remaining': '余额',
+  'seats.fillRate': '收生率',
+  'seats.sections': '分班数',
+  'seats.overviewTitle': '各学期收生情况',
+  'seats.overviewHint': '已收生 / 学额',
   // Session types for review cards (without brackets)
   'sessionTypeBadge.lecture': '讲课',
   'sessionTypeBadge.tutorial': '导修',

@@ -23,6 +23,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "deploy:functions": "bash deploy-functions-simple.sh",
+    "import:offerings": "bun scripts/import-course-offerings.mjs",
     "performance:test": "echo '🚀 Running performance tests...' && bun run build && echo '✅ Performance test completed'",
     "performance:lighthouse": "echo '💡 Run: lighthouse http://localhost:8080 --output=html --output-path=./performance-report.html'",
     "docs:setup": "node tools/scripts/docs/create-multilingual-docs.js",
