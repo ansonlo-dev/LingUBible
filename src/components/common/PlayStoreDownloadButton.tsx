@@ -52,7 +52,7 @@ export const PlayStoreDownloadButton = ({ className = '' }: { className?: string
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="bg-white dark:bg-gray-900 max-w-lg max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <GooglePlayIcon className="h-5 w-5" />
