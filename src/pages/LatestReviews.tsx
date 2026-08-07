@@ -101,7 +101,8 @@ const LatestReviews = () => {
   // 所有篩選選項與計數皆由已載入的評論推導（不需額外查詢）
   const filterCounts = useMemo(() => {
     const courseCounts: { [key: string]: { label: string; count: number } } = {};
-    const instructorCounts: { [key: string]: number } = {};
+    // 值仍是原始英文名（篩選比對與排序都靠它），label 才是介面語言下的顯示名
+    const instructorCounts: { [key: string]: { label: string; count: number } } = {};
     const gradeCounts: { [key: string]: number } = {};
     const termCounts: { [key: string]: { name: string; count: number } } = {};
     const languageCounts: { [key: string]: number } = {};
@@ -121,7 +122,15 @@ const LatestReviews = () => {
       instructorDetails.forEach(detail => {
         if (detail.instructor_name && !seenInstructors.has(detail.instructor_name)) {
           seenInstructors.add(detail.instructor_name);
-          instructorCounts[detail.instructor_name] = (instructorCounts[detail.instructor_name] || 0) + 1;
+          if (!instructorCounts[detail.instructor_name]) {
+            const instructor = instructorsMap.get(detail.instructor_name);
+            const nameInfo = instructor ? getInstructorName(instructor, language) : null;
+            const label = nameInfo
+              ? `${nameInfo.primary}${nameInfo.secondary ? `（${nameInfo.secondary}）` : ''}`
+              : detail.instructor_name;
+            instructorCounts[detail.instructor_name] = { label, count: 0 };
+          }
+          instructorCounts[detail.instructor_name].count++;
         }
         if (detail.session_type && !seenSessionTypes.has(detail.session_type)) {
           seenSessionTypes.add(detail.session_type);
@@ -176,7 +185,7 @@ const LatestReviews = () => {
       languageCounts,
       sessionTypeCounts
     };
-  }, [reviews, language]);
+  }, [reviews, language, instructorsMap]);
 
   const hasActiveFilters =
     filters.searchTerm.trim() !== '' ||

@@ -43,7 +43,8 @@ interface LatestReviewsFiltersProps {
   filters: LatestReviewFilters;
   onFiltersChange: (filters: LatestReviewFilters) => void;
   courseCounts: { [key: string]: { label: string; count: number } };
-  instructorCounts: { [key: string]: number };
+  // 與 courseCounts 同形狀：key 是原始英文名（篩選值），label 已依介面語言組好
+  instructorCounts: { [key: string]: { label: string; count: number } };
   gradeCounts: { [key: string]: number };
   termCounts: { [key: string]: { name: string; count: number } };
   languageCounts: { [key: string]: number };
@@ -168,10 +169,10 @@ export function LatestReviewsFilters({
     count: data.count
   }));
 
-  const instructorOptions = Object.entries(instructorCounts || {}).map(([instructor, count]) => ({
+  const instructorOptions = Object.entries(instructorCounts || {}).map(([instructor, data]) => ({
     value: instructor,
-    label: instructor,
-    count: count
+    label: data.label,
+    count: data.count
   }));
 
   const gradeOptions = Object.entries(gradeCounts || {}).map(([grade, count]) => ({
