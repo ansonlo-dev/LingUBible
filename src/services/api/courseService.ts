@@ -359,6 +359,19 @@ export class CourseService {
     this.allReviewsScanCache = null;
   }
 
+  // review_votes 全表彙總的被動快取（供 /reviews 的完整資料集使用）。
+  // 彙總結果體積小，記憶體 + localStorage 雙層，重新整理也能命中。
+  private static allVoteStatsScanCache: { data: Map<string, { upvotes: number; downvotes: number }>; expiry: number } | null = null;
+  private static allVoteStatsScanInflight: Promise<Map<string, { upvotes: number; downvotes: number }>> | null = null;
+  private static readonly ALL_VOTE_STATS_SCAN_TTL = 5 * 60 * 1000; // 5 分鐘被動快取
+  private static readonly ALL_VOTE_STATS_CACHE_KEY = 'all_review_vote_stats_v1';
+
+  /** 投票 / 取消投票後清除，讓票數立即反映（含 localStorage，否則重新整理仍是舊數） */
+  private static clearVoteStatsScanCache(): void {
+    this.allVoteStatsScanCache = null;
+    persistentCache.delete(this.ALL_VOTE_STATS_CACHE_KEY);
+  }
+
   private static async getAllReviewsScanned(): Promise<Review[]> {
     const now = Date.now();
     if (this.allReviewsScanCache && this.allReviewsScanCache.expiry > now) {
@@ -2627,6 +2640,8 @@ export class CourseService {
           }
         );
       }
+
+      this.clearVoteStatsScanCache();
     } catch (error) {
       console.error('Error voting on review:', error);
       throw new Error('Failed to vote on review');
@@ -2656,6 +2671,8 @@ export class CourseService {
           vote.$id
         );
       }
+
+      this.clearVoteStatsScanCache();
     } catch (error) {
       console.error('Error removing vote:', error);
       throw new Error('Failed to remove vote');
@@ -3072,42 +3089,85 @@ export class CourseService {
   /**
    * 掃描全部 review_votes 並彙總每則評論的讚/倒讚數。
    * 游標分頁直到讀完（目前資料量一次即可），只選取必要欄位。
+   *
+   * 雙層被動快取：彙總後的結果只是 reviewId → 讚/倒讚數，體積很小（每則約 30 bytes），
+   * 因此連 localStorage 一起寫，整頁重新載入也能命中 0 次讀取——這是 /reviews
+   * 重新整理時唯一還能省掉的請求（評論本體因體積過大只留記憶體快取）。
+   * 投票／取消投票時由 clearVoteStatsScanCache 清除，新鮮度與原本即時查詢一致。
    */
   private static async getAllReviewVoteStatsScanned(): Promise<Map<string, { upvotes: number; downvotes: number }>> {
-    const stats = new Map<string, { upvotes: number; downvotes: number }>();
-    let cursor: string | undefined;
-    while (true) {
-      const queries = [
-        Query.limit(this.MAX_REVIEWS_LIMIT),
-        Query.select(['$id', 'review_id', 'vote_type'])
-      ];
-      if (cursor) queries.push(Query.cursorAfter(cursor));
-      const response = await tablesDB.listRows(
-        this.DATABASE_ID,
-        this.REVIEW_VOTES_COLLECTION_ID,
-        queries
-      );
-      const rows = response.rows as unknown as ReviewVote[];
-      rows.forEach(vote => {
-        let entry = stats.get(vote.review_id);
-        if (!entry) {
-          entry = { upvotes: 0, downvotes: 0 };
-          stats.set(vote.review_id, entry);
-        }
-        if (vote.vote_type === 'up') entry.upvotes++;
-        else if (vote.vote_type === 'down') entry.downvotes++;
-      });
-      if (rows.length < this.MAX_REVIEWS_LIMIT) break;
-      cursor = rows[rows.length - 1].$id;
+    const now = Date.now();
+    if (this.allVoteStatsScanCache && this.allVoteStatsScanCache.expiry > now) {
+      return this.allVoteStatsScanCache.data;
     }
-    return stats;
+    if (this.allVoteStatsScanInflight) return this.allVoteStatsScanInflight;
+
+    // 記憶體快取在重新載入後是空的，localStorage 仍可能有效。
+    // expiry 存在值裡面，還原時沿用原本的到期時間，不會被續命成兩倍 TTL。
+    const persisted = persistentCache.get<{ expiry: number; entries: [string, number, number][] }>(
+      this.ALL_VOTE_STATS_CACHE_KEY
+    );
+    if (persisted && persisted.expiry > now) {
+      const restored = new Map(
+        persisted.entries.map(([reviewId, upvotes, downvotes]) => [reviewId, { upvotes, downvotes }])
+      );
+      this.allVoteStatsScanCache = { data: restored, expiry: persisted.expiry };
+      return restored;
+    }
+
+    this.allVoteStatsScanInflight = (async () => {
+      try {
+        const stats = new Map<string, { upvotes: number; downvotes: number }>();
+        let cursor: string | undefined;
+        while (true) {
+          const queries = [
+            Query.limit(this.MAX_REVIEWS_LIMIT),
+            Query.select(['$id', 'review_id', 'vote_type'])
+          ];
+          if (cursor) queries.push(Query.cursorAfter(cursor));
+          const response = await tablesDB.listRows(
+            this.DATABASE_ID,
+            this.REVIEW_VOTES_COLLECTION_ID,
+            queries
+          );
+          const rows = response.rows as unknown as ReviewVote[];
+          rows.forEach(vote => {
+            let entry = stats.get(vote.review_id);
+            if (!entry) {
+              entry = { upvotes: 0, downvotes: 0 };
+              stats.set(vote.review_id, entry);
+            }
+            if (vote.vote_type === 'up') entry.upvotes++;
+            else if (vote.vote_type === 'down') entry.downvotes++;
+          });
+          if (rows.length < this.MAX_REVIEWS_LIMIT) break;
+          cursor = rows[rows.length - 1].$id;
+        }
+
+        const expiry = Date.now() + this.ALL_VOTE_STATS_SCAN_TTL;
+        this.allVoteStatsScanCache = { data: stats, expiry };
+        persistentCache.set(
+          this.ALL_VOTE_STATS_CACHE_KEY,
+          {
+            expiry,
+            entries: [...stats.entries()].map(([reviewId, s]) => [reviewId, s.upvotes, s.downvotes] as [string, number, number])
+          },
+          this.ALL_VOTE_STATS_SCAN_TTL
+        );
+        return stats;
+      } finally {
+        this.allVoteStatsScanInflight = null;
+      }
+    })();
+
+    return this.allVoteStatsScanInflight;
   }
 
   /**
    * /reviews 瀏覽用完整資料集：全部評論 + 相關課程/講師/學期/投票統計。
    * 篩選、搜尋、排序、分頁全部在客戶端進行，因此讀取成本固定且極低：
    * - reviews 全表掃描 1 次（getAllReviewsScanned，3 分鐘共享快取，講師頁後備路徑同源）
-   * - review_votes 全表掃描 1 次
+   * - review_votes 全表掃描 1 次（彙總結果 5 分鐘雙層快取，重新整理後仍命中即 0 次）
    * - 課程/講師目錄（6 小時持久化快取，逛過列表頁即為 0 次）
    * - 學期（all_terms 快取，通常 0 次）
    * 組裝結果記憶體被動快取 5 分鐘（資料量較大，不寫入 localStorage）；
@@ -3309,6 +3369,8 @@ export class CourseService {
         this.clearReviewsScanCache();
       }
       this.clearLatestReviewsCache();
+      // 該評論的投票列也一併刪掉了，彙總快取要跟著失效
+      this.clearVoteStatsScanCache();
 
       // 重算該課程與全部講師的反正規化統計（非阻塞）
       if (courseCodeToRecompute) {
