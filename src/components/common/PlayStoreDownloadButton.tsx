@@ -8,6 +8,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { useLanguage } from '@/hooks/useLanguage';
+import { INFO_DIALOG_CONTENT_CLASS } from './dialogStyles';
 
 const GOOGLE_GROUP_URL = 'https://groups.google.com/g/lingubible';
 const TESTING_OPT_IN_URL = 'https://play.google.com/apps/testing/com.lingubible.www.twa';
@@ -52,18 +53,23 @@ export const PlayStoreDownloadButton = ({ className = '' }: { className?: string
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="bg-white dark:bg-gray-900 max-w-lg max-h-[85vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <GooglePlayIcon className="h-5 w-5" />
+        {/* 外框樣式與分享彈窗共用，見 dialogStyles.ts */}
+        <DialogContent className={INFO_DIALOG_CONTENT_CLASS}>
+          {/* text-left：DialogHeader 預設在手機置中，但標題是「圖示 + 文字」的
+              flex 列一定靠左，兩者對不齊；統一靠左。pr-8 留給右上角的關閉鍵。 */}
+          <DialogHeader className="pr-8 text-left">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <GooglePlayIcon className="h-5 w-5 shrink-0" />
               {t('playStore.dialogTitle')}
             </DialogTitle>
-            <DialogDescription className="text-left">
+            <DialogDescription className="text-sm">
               {t('playStore.dialogIntro')}
             </DialogDescription>
           </DialogHeader>
 
-          <ol className="space-y-4 mt-2">
+          {/* 區塊間距交給 DialogContent 的 grid gap-4，這裡不再另加 margin，
+              上下留白才會跟分享彈窗一致 */}
+          <ol className="min-w-0 space-y-4">
             {steps.map((step, index) => (
               <li key={index} className="flex gap-3">
                 <span className="flex-shrink-0 flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold mt-0.5">
@@ -88,7 +94,7 @@ export const PlayStoreDownloadButton = ({ className = '' }: { className?: string
             ))}
           </ol>
 
-          <p className="text-xs text-muted-foreground border-t pt-3 mt-2">
+          <p className="border-t border-gray-200 pt-3 text-xs text-muted-foreground dark:border-zinc-700">
             {t('playStore.feedback')}{' '}
             <a href="mailto:support@lingubible.com" className="text-primary hover:underline">
               support@lingubible.com
