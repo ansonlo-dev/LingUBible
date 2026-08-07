@@ -619,7 +619,12 @@ const LatestReviews = () => {
                                       navigate(`/instructors/${encodeURIComponent(instructorDetail.instructor_name)}?review_id=${reviewInfo.review.$id}`);
                                     }}
                                   >
+                                    {/* 中文介面下 secondary 是講師的中文名（沒有就是
+                                        undefined，只顯示英文名）。與主頁最新評論一
+                                        樣並排在同一行，避免這一列變兩行、右側的課堂
+                                        類型與教學評分跟著錯位。 */}
                                     {nameInfo ? nameInfo.primary : instructorDetail.instructor_name}
+                                    {nameInfo?.secondary && `（${nameInfo.secondary}）`}
                                   </a>
                                   {renderSessionTypeBadge(instructorDetail.session_type)}
                                   <div className="flex items-center gap-1 ml-auto text-xs">
