@@ -8,15 +8,25 @@ import {
   AlertCircle,
   ThumbsUp,
   ThumbsDown,
-  Clock
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  CheckCircle,
+  XCircle,
+  FileText,
+  User,
+  GraduationCap
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { StarRating } from '@/components/ui/star-rating';
 import { ReviewAvatar } from '@/components/ui/review-avatar';
 import { GradeBadge } from '@/components/ui/GradeBadge';
+import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
+import { cn } from '@/lib/utils';
 import { CourseService } from '@/services/api/courseService';
-import type { InstructorReviewFromDetails, Instructor } from '@/services/api/courseService';
+import type { InstructorReviewFromDetails, Instructor, InstructorDetail } from '@/services/api/courseService';
 import { hasMarkdownFormatting, renderCommentMarkdown } from '@/utils/ui/markdownRenderer';
 import { formatDateTimeUTC8 } from '@/utils/ui/dateUtils';
 import { getInstructorName, getCourseTitle, getTermName } from '@/utils/textUtils';
@@ -51,6 +61,8 @@ const LatestReviews = () => {
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+  // 講師評價展開狀態（與課程頁 / 講師頁一致：預設收合，按鈕展開完整講師評價區塊）
+  const [expandedInstructorDetails, setExpandedInstructorDetails] = useState<Record<string, boolean>>({});
   // 畫面上顯示的評論數（「載入更多」只是揭露更多已在客戶端的資料，不發請求）
   const [displayCount, setDisplayCount] = useState(DISPLAY_BATCH_SIZE);
 
@@ -322,18 +334,216 @@ const LatestReviews = () => {
   );
   const hasMoreToDisplay = displayCount < filteredReviews.length;
 
+  // 課堂類型徽章：與課程頁 / 講師頁一樣可點擊套用篩選（單擊即套用，手機不彈提示框）
   const renderSessionTypeBadge = (sessionType: string) => (
-    <span
-      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs shrink-0 ${
-        sessionType === 'Lecture'
-          ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
-          : sessionType === 'Tutorial'
-          ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800'
-          : 'bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800'
+    <ResponsiveTooltip
+      content={t('filter.clickToFilterBySessionType', { type: t(`sessionTypeBadge.${sessionType.toLowerCase()}`) })}
+      hasClickAction={true}
+      disableMobilePopup={true}
+    >
+      <span
+        className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs shrink-0 cursor-pointer transition-all duration-200 hover:scale-105 ${
+          sessionType === 'Lecture'
+            ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/50'
+            : sessionType === 'Tutorial'
+            ? 'bg-purple-50 text-purple-700 border border-purple-200 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/50'
+            : 'bg-gray-50 text-gray-700 border border-gray-200 dark:bg-gray-900/20 dark:text-gray-300 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-900/50'
+        }`}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setFilters(prev => ({ ...prev, selectedSessionTypes: [sessionType] }));
+        }}
+      >
+        {t(`sessionTypeBadge.${sessionType.toLowerCase()}`)}
+      </span>
+    </ResponsiveTooltip>
+  );
+
+  // 課程要求徽章（與課程頁同款式；本頁沒有對應的要求篩選器，故不可點擊）
+  const renderRequirementBadge = (hasRequirement: boolean, label: string) => (
+    <Badge
+      variant={hasRequirement ? 'default' : 'secondary'}
+      className={`text-xs shrink-0 cursor-default ${
+        hasRequirement
+          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
       }`}
     >
-      {t(`sessionTypeBadge.${sessionType.toLowerCase()}`)}
-    </span>
+      {hasRequirement ? (
+        <CheckCircle className="h-3 w-3 mr-1 shrink-0" />
+      ) : (
+        <XCircle className="h-3 w-3 mr-1 shrink-0" />
+      )}
+      <span className="truncate">{label}</span>
+    </Badge>
+  );
+
+  // 完整講師評價區塊：與課程頁 renderInstructorDetails 同結構（講師名 / 課堂類型徽章 /
+  // 教學 + 評分星等 / 課程要求 / 講師評論 / 服務學習）。
+  // 所有欄位都來自已載入的 review.instructor_details，不會產生任何額外資料庫讀取。
+  const renderInstructorDetails = (instructorDetails: InstructorDetail[], reviewId: string) => (
+    <div className="space-y-4">
+      {instructorDetails.map((instructor, index) => {
+        const fullInstructor = instructorsMap.get(instructor.instructor_name);
+        const nameInfo = fullInstructor ? getInstructorName(fullInstructor, language) : null;
+        const isUnknown = instructor.instructor_name === 'UNKNOWN';
+
+        return (
+          <div key={index} className="rounded-lg p-4 overflow-hidden bg-gray-200 dark:bg-[rgb(26_35_50)]">
+            <div className="space-y-2 mb-3">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 md:gap-4">
+                <h4 className="font-semibold text-lg flex items-center gap-2 min-w-0 md:flex-1">
+                  {isUnknown ? (
+                    <span className="px-2 py-1 inline-block">
+                      <div className="font-bold text-muted-foreground">
+                        {language === 'en' ? 'Unknown instructor' : '未知教師'}
+                      </div>
+                    </span>
+                  ) : (
+                    <a
+                      href={`/instructors/${encodeURIComponent(instructor.instructor_name)}?review_id=${reviewId}`}
+                      className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-2 py-1 rounded-md inline-block no-underline"
+                      onClick={(e) => {
+                        if (e.ctrlKey || e.metaKey || e.button === 1) {
+                          return;
+                        }
+                        e.preventDefault();
+                        navigate(`/instructors/${encodeURIComponent(instructor.instructor_name)}?review_id=${reviewId}`);
+                      }}
+                    >
+                      <div className="font-bold">{nameInfo ? nameInfo.primary : instructor.instructor_name}</div>
+                      {nameInfo?.secondary && (
+                        <div className="text-sm text-muted-foreground font-normal mt-0.5">
+                          {nameInfo.secondary}
+                        </div>
+                      )}
+                    </a>
+                  )}
+                </h4>
+
+                <div className="flex flex-wrap items-center gap-2 md:shrink-0">
+                  {renderSessionTypeBadge(instructor.session_type)}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
+              <div className="text-center">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                  <span className="font-medium text-sm sm:text-base">{t('card.teaching')}</span>
+                  <div className="flex items-center justify-center lg:ml-1">
+                    {instructor.teaching === null ? (
+                      <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                    ) : instructor.teaching === -1 ? (
+                      <span className="text-muted-foreground">
+                        {instructor.not_attended ? t('review.notAttended') : t('review.notApplicable')}
+                      </span>
+                    ) : (
+                      <StarRating rating={instructor.teaching} showValue size="sm" showTooltip ratingType="teaching" />
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-center gap-1 mb-1 lg:mb-0">
+                  <span className="font-medium text-sm sm:text-base">{t('card.grading')}</span>
+                  <div className="flex items-center justify-center lg:ml-1">
+                    {instructor.grading === null ? (
+                      <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
+                    ) : instructor.grading === -1 ? (
+                      <span className="text-muted-foreground">{t('review.notApplicable')}</span>
+                    ) : (
+                      <StarRating rating={instructor.grading} showValue size="sm" showTooltip ratingType="grading" />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 課程要求 - 只有在有任何要求時才顯示 */}
+            {(instructor.has_attendance_requirement ||
+              instructor.has_quiz ||
+              instructor.has_midterm ||
+              instructor.has_final ||
+              instructor.has_individual_assignment ||
+              instructor.has_group_project ||
+              instructor.has_presentation ||
+              instructor.has_reading) && (
+              <div className="mb-4">
+                <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <FileText className="h-4 w-4 shrink-0" />
+                  <span>{t('review.courseRequirements')}</span>
+                </h5>
+                <div className="ml-4 flex flex-wrap gap-2 overflow-hidden">
+                  {renderRequirementBadge(instructor.has_attendance_requirement, t('review.requirements.attendance'))}
+                  {renderRequirementBadge(instructor.has_quiz, t('review.requirements.quiz'))}
+                  {renderRequirementBadge(instructor.has_midterm, t('review.requirements.midterm'))}
+                  {renderRequirementBadge(instructor.has_final, t('review.requirements.final'))}
+                  {renderRequirementBadge(instructor.has_individual_assignment, t('review.requirements.individualAssignment'))}
+                  {renderRequirementBadge(instructor.has_group_project, t('review.requirements.groupProject'))}
+                  {renderRequirementBadge(instructor.has_presentation, t('review.requirements.presentation'))}
+                  {renderRequirementBadge(instructor.has_reading, t('review.requirements.reading'))}
+                </div>
+              </div>
+            )}
+
+            {/* 講師評論 */}
+            {instructor.comments && (
+              <div className="min-w-0 mb-4">
+                <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <User className="h-4 w-4 shrink-0" />
+                  <span>{t('review.instructorComments')}</span>
+                </h5>
+                <div className="ml-4 break-words text-sm">
+                  {hasMarkdownFormatting(instructor.comments) ? (
+                    <div className="text-sm">{renderCommentMarkdown(instructor.comments)}</div>
+                  ) : (
+                    <div className="text-sm whitespace-pre-line">{instructor.comments}</div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* 服務學習 */}
+            {instructor.has_service_learning && (
+              <div className="mb-1">
+                <h5 className="text-sm font-medium mb-2 flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4 shrink-0" />
+                  <span>{t('review.serviceLearning')}</span>
+                </h5>
+                <div className="ml-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        'inline-flex items-center px-1.5 py-0.5 rounded text-xs cursor-default',
+                        instructor.service_learning_type === 'compulsory'
+                          ? 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800'
+                          : 'bg-green-50 text-green-700 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800'
+                      )}
+                    >
+                      {instructor.service_learning_type === 'compulsory'
+                        ? t('review.compulsory')
+                        : t('review.optional')}
+                    </span>
+                  </div>
+                  {instructor.service_learning_description && (
+                    <div className="text-xs break-words">
+                      {hasMarkdownFormatting(instructor.service_learning_description) ? (
+                        <div className="text-xs">{renderCommentMarkdown(instructor.service_learning_description)}</div>
+                      ) : (
+                        <p className="text-xs whitespace-pre-line">{instructor.service_learning_description}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 
   return (
@@ -438,6 +648,7 @@ const LatestReviews = () => {
                 {displayedReviews.map((reviewInfo) => {
                   const courseInfo = getCourseTitle(reviewInfo.course, language);
                   const isExpanded = expandedComments[reviewInfo.review.$id];
+                  const isInstructorExpanded = expandedInstructorDetails[reviewInfo.review.$id];
                   const comments = reviewInfo.review.course_comments || '';
                   const isLongComment = comments.length > 300;
 
@@ -606,53 +817,38 @@ const LatestReviews = () => {
                         </>
                       )}
 
-                      {/* 講師評分（精簡版：講師名 + 課堂類型 + 教學評分） */}
+                      {/* 講師評價：與課程頁 / 講師頁一致——收合按鈕 + 展開後每位講師一個完整區塊 */}
                       {reviewInfo.instructorDetails.length > 0 && (
-                        <div className="space-y-2">
-                          <h5 className="text-sm font-medium">{t('review.instructorEvaluation')}</h5>
-                          <div className="space-y-2">
-                            {reviewInfo.instructorDetails.map((instructorDetail, idx) => {
-                              const instructor = instructorsMap.get(instructorDetail.instructor_name);
-                              const nameInfo = instructor ? getInstructorName(instructor, language) : null;
-
-                              return (
-                                <div key={idx} className="flex flex-wrap items-center gap-2 p-2 bg-muted/50 rounded-md">
-                                  <a
-                                    href={`/instructors/${encodeURIComponent(instructorDetail.instructor_name)}?review_id=${reviewInfo.review.$id}`}
-                                    className="text-primary cursor-pointer hover:bg-primary/10 hover:text-primary transition-colors px-1.5 py-0.5 rounded-md inline-block no-underline text-sm font-medium min-w-0"
-                                    onClick={(e) => {
-                                      if (e.ctrlKey || e.metaKey || e.button === 1) {
-                                        return;
-                                      }
-                                      e.preventDefault();
-                                      navigate(`/instructors/${encodeURIComponent(instructorDetail.instructor_name)}?review_id=${reviewInfo.review.$id}`);
-                                    }}
-                                  >
-                                    {/* 中文介面下 secondary 是講師的中文名（沒有就是
-                                        undefined，只顯示英文名）。與主頁最新評論一
-                                        樣並排在同一行，避免這一列變兩行、右側的課堂
-                                        類型與教學評分跟著錯位。 */}
-                                    {nameInfo ? nameInfo.primary : instructorDetail.instructor_name}
-                                    {nameInfo?.secondary && `（${nameInfo.secondary}）`}
-                                  </a>
-                                  {renderSessionTypeBadge(instructorDetail.session_type)}
-                                  <div className="flex items-center gap-1 ml-auto text-xs">
-                                    <span className="text-muted-foreground">{t('review.teachingScore')}</span>
-                                    {instructorDetail.teaching === null ? (
-                                      <span className="text-muted-foreground">{t('review.rating.notRated')}</span>
-                                    ) : instructorDetail.teaching === -1 ? (
-                                      <span className="text-muted-foreground">
-                                        {instructorDetail.not_attended ? t('review.notAttended') : t('review.notApplicable')}
-                                      </span>
-                                    ) : (
-                                      <StarRating rating={instructorDetail.teaching} showValue size="sm" showTooltip ratingType="teaching" />
-                                    )}
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        <>
+                          <Separator />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setExpandedInstructorDetails(prev => ({
+                              ...prev,
+                              [reviewInfo.review.$id]: !prev[reviewInfo.review.$id]
+                            }))}
+                            className="w-full justify-center"
+                          >
+                            {isInstructorExpanded ? (
+                              <>
+                                <ChevronUp className="h-4 w-4 mr-2" />
+                                {t('review.hideInstructorDetails')}
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown className="h-4 w-4 mr-2" />
+                                {t('review.showInstructorDetails')} ({reviewInfo.instructorDetails.length})
+                              </>
+                            )}
+                          </Button>
+                          {isInstructorExpanded && (
+                            <>
+                              <Separator />
+                              {renderInstructorDetails(reviewInfo.instructorDetails, reviewInfo.review.$id)}
+                            </>
+                          )}
+                        </>
                       )}
 
                       {/* 底部：投票數（唯讀）與提交時間 */}
