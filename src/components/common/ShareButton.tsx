@@ -151,7 +151,12 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
             auto，最小值等於內容的 min-content。<textarea> 有依 cols 算出的固有
             寬度（中文字型下更寬），會把軌道撐得比對話框還寬，小螢幕上整塊內容
             就溢出右邊。把唯一那欄鎖成 minmax(0,1fr) 才會真正跟著容器走。 */}
-        <DialogContent className="grid-cols-[minmax(0,1fr)] max-h-[90vh] w-[calc(100vw-2rem)] max-w-md gap-4 overflow-y-auto overflow-x-hidden p-4 sm:p-6">
+        {/* bg-white/dark:bg-zinc-900：DialogContent 預設的 bg-background 會編成
+            rgb(255, 255, 255 / 1)（逗號 + 斜線 alpha 混用，CSS 判為無效而整條丟
+            棄），border-border 同樣失效退回 currentColor，結果對話框在淺色主題下
+            完全透明、看得到底下的頁面。這裡直接指定不透明底色與框線，色值對齊
+            index.css 中 [role="alertdialog"] 既有的對話框樣式。 */}
+        <DialogContent className="grid-cols-[minmax(0,1fr)] max-h-[90vh] w-[calc(100vw-2rem)] max-w-md gap-4 overflow-y-auto overflow-x-hidden border-gray-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900 sm:p-6">
           {/* text-left：DialogHeader 預設在手機是置中，但標題是「圖示 + 文字」的
               flex 列一定靠左，兩者對不齊；統一靠左。pr-8 留給右上角的關閉鍵。 */}
           <DialogHeader className="pr-8 text-left">
