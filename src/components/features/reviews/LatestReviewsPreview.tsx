@@ -96,16 +96,22 @@ export function LatestReviewsPreview() {
               const courseInfo = getCourseTitle(reviewInfo.course, language);
               const comments = reviewInfo.review.course_comments || '';
               const courseUrl = `/courses/${reviewInfo.review.course_code}?review_id=${reviewInfo.review.$id}`;
-              // 講師：保留原始名字作為連結 key，顯示名優先用講師資料的多語言名稱
-              const uniqueInstructors: { key: string; display: string }[] = [];
+              // 講師：保留原始名字作為連結 key，顯示名優先用講師資料的多語言名稱。
+              // 中文介面下 getInstructorName 的 secondary 就是中文名（沒有中文名時
+              // 為 undefined，只顯示英文名）。這裡把中英文並排在同一個連結裡而不是
+              // 像課程名那樣拆兩行，因為一則評論可能有多位講師，分行會讓中文名對不
+              // 回是哪一位。
+              const uniqueInstructors: { key: string; primary: string; secondary?: string }[] = [];
               const seenInstructors = new Set<string>();
               reviewInfo.instructorDetails.forEach(detail => {
                 if (!detail.instructor_name || seenInstructors.has(detail.instructor_name)) return;
                 seenInstructors.add(detail.instructor_name);
                 const instructor = instructorsMap.get(detail.instructor_name);
+                const nameInfo = instructor ? getInstructorName(instructor, language) : null;
                 uniqueInstructors.push({
                   key: detail.instructor_name,
-                  display: instructor ? getInstructorName(instructor, language).primary : detail.instructor_name
+                  primary: nameInfo?.primary || detail.instructor_name,
+                  secondary: nameInfo?.secondary
                 });
               });
 
@@ -173,7 +179,8 @@ export function LatestReviewsPreview() {
                                 }}
                                 className="no-underline text-muted-foreground hover:text-primary hover:underline transition-colors"
                               >
-                                {instructor.display}
+                                {instructor.primary}
+                                {instructor.secondary && `（${instructor.secondary}）`}
                               </a>
                             </React.Fragment>
                           ))}
