@@ -829,6 +829,7 @@ const CourseDetail = () => {
     name: string;        // original filename (used for download)
     displayName: string; // filename without course-code prefix or extension
     sizeOriginal: number;
+    isPdf: boolean;      // only PDFs can be opened in the embedded viewer
   };
   const [studyMaterials, setStudyMaterials] = useState<StudyMaterial[]>([]);
   const [studyMaterialsLoading, setStudyMaterialsLoading] = useState<boolean>(false);
@@ -1914,6 +1915,7 @@ const CourseDetail = () => {
               name: f.name,
               displayName: toDisplayName(f.name),
               sizeOriginal: f.sizeOriginal,
+              isPdf: f.mimeType === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'),
             });
           }
           if (files.length < PAGE_SIZE) break;
@@ -3922,18 +3924,21 @@ const CourseDetail = () => {
                                 <div className="text-xs text-muted-foreground truncate">{sizeLabel}</div>
                               )}
                             </div>
-                            <div className="flex items-center gap-1 shrink-0">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8"
-                                title={t('pages.courseDetail.examPaperViewFile')}
-                                aria-label={t('pages.courseDetail.examPaperViewFile')}
-                                onClick={(e) => { e.stopPropagation(); setPdfViewer({ src: viewUrl.toString(), title: paper.name, persist: true }); }}
-                              >
-                                <ExternalLink className="h-4 w-4" />
-                              </Button>
-                            </div>
+                            {/* Only PDFs can be opened — the embedded viewer can't render other formats. */}
+                            {paper.isPdf && (
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8"
+                                  title={t('pages.courseDetail.examPaperViewFile')}
+                                  aria-label={t('pages.courseDetail.examPaperViewFile')}
+                                  onClick={(e) => { e.stopPropagation(); setPdfViewer({ src: viewUrl.toString(), title: paper.name, persist: true }); }}
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         );
                       })}
