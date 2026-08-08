@@ -80,6 +80,9 @@ export default defineConfig(({ command, mode }) => {
               // 沒有標 sideEffects（25 個社群圖示全都搖不掉），留在 vendor 會
               // 讓每次首屏都白背這包，因此獨立成一個按需載入的分塊。
               if (id.includes('react-share')) return 'share';
+              // qrcode.react 只在捐款彈窗展開 QR 碼時才會用到，同樣走動態
+              // import；獨立成分塊，避免為了幾張 QR 碼讓所有人首屏多背一包。
+              if (id.includes('qrcode.react')) return 'qrcode';
               if (id.includes('@radix-ui') || id.includes('lucide-react')) return 'ui';
               return 'vendor';
             }

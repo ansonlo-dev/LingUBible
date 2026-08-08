@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, Copy, ExternalLink, Heart, HeartHandshake } from 'lucide-react';
+import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
+import { Check, Copy, ExternalLink, Heart, HeartHandshake, QrCode } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +27,9 @@ import {
  * 三個入口共用同一個元件（各自持有 open state），文案與幣種只有 config/donation.ts
  * 一份，改一次三處同步。
  */
+
+/** QR 碼只有展開時才需要，連同 qrcode.react 一起按需載入。 */
+const CryptoQrCode = lazy(() => import('@/components/common/CryptoQrCode'));
 
 export interface DonationDialogProps {
   open: boolean;
@@ -56,7 +59,15 @@ async function copyText(value: string): Promise<boolean> {
   }
 }
 
-function CryptoRow({ method }: { method: CryptoDonationMethod }) {
+function CryptoRow({
+  method,
+  qrOpen,
+  onToggleQr,
+}: {
+  method: CryptoDonationMethod;
+  qrOpen: boolean;
+  onToggleQr: () => void;
+}) {
   const { t } = useLanguage();
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
@@ -86,50 +97,83 @@ function CryptoRow({ method }: { method: CryptoDonationMethod }) {
   }, [label, method.address, t, toast]);
 
   return (
-    // 整列都是按鈕而不是只有右邊的圖示：手機上地址那一塊才是最大的觸控目標
-    <button
-      type="button"
-      onClick={handleCopy}
-      aria-label={t('donate.copyAddress', { name: label })}
-      className="group flex w-full items-center gap-3 rounded-lg border border-gray-200 bg-gray-50/70 p-2.5 text-left transition-colors hover:bg-gray-100 dark:border-zinc-700 dark:bg-zinc-800/60 dark:hover:bg-zinc-800"
-    >
-      <span
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-        style={{ backgroundColor: method.color }}
-        aria-hidden="true"
-      >
-        {method.glyph}
-      </span>
+    <div className="rounded-lg border border-gray-200 bg-gray-50/70 dark:border-zinc-700 dark:bg-zinc-800/60">
+      <div className="flex items-center gap-1">
+        {/* 複製的觸控目標刻意含整塊文字（而不是只有右邊的圖示），手機上好按很多 */}
+        <button
+          type="button"
+          onClick={handleCopy}
+          aria-label={t('donate.copyAddress', { name: label })}
+          className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg p-2.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-zinc-800"
+        >
+          <span
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+            style={{ backgroundColor: method.color }}
+            aria-hidden="true"
+          >
+            {method.glyph}
+          </span>
 
-      {/* min-w-0：沒有它的話 break-all 的地址會把 flex 軌道撐爆，整列溢出彈窗 */}
-      <span className="min-w-0 flex-1">
-        <span className="flex items-baseline gap-1.5">
-          <span className="text-sm font-semibold text-foreground">{method.name}</span>
-          {method.network && (
-            <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-zinc-700 dark:text-zinc-300">
-              {method.network}
+          {/* min-w-0：沒有它的話 break-all 的地址會把 flex 軌道撐爆，整列溢出彈窗 */}
+          <span className="min-w-0 flex-1">
+            <span className="flex items-baseline gap-1.5">
+              <span className="text-sm font-semibold text-foreground">{method.name}</span>
+              {method.network && (
+                <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-zinc-700 dark:text-zinc-300">
+                  {method.network}
+                </span>
+              )}
             </span>
-          )}
-        </span>
-        <span className="mt-0.5 block break-all font-mono text-[11px] leading-tight text-muted-foreground">
-          {method.address}
-        </span>
-      </span>
+            <span className="mt-0.5 block break-all font-mono text-[11px] leading-tight text-muted-foreground">
+              {method.address}
+            </span>
+          </span>
 
-      <span className="shrink-0 text-muted-foreground transition-colors group-hover:text-foreground">
-        {copied ? (
-          <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
-        ) : (
-          <Copy className="h-4 w-4" />
-        )}
-      </span>
-    </button>
+          <span className="shrink-0 text-muted-foreground transition-colors group-hover:text-foreground">
+            {copied ? (
+              <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
+            ) : (
+              <Copy className="h-4 w-4" />
+            )}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={onToggleQr}
+          aria-label={t('donate.showQr', { name: label })}
+          aria-expanded={qrOpen}
+          className={`mr-1.5 shrink-0 rounded-md p-2 transition-colors hover:bg-gray-200 dark:hover:bg-zinc-700 ${
+            qrOpen ? 'bg-gray-200 text-foreground dark:bg-zinc-700' : 'text-muted-foreground'
+          }`}
+        >
+          <QrCode className="h-4 w-4" />
+        </button>
+      </div>
+
+      {qrOpen && (
+        <div className="flex flex-col items-center gap-2 border-t border-gray-200 px-2.5 py-3 dark:border-zinc-700">
+          {/* fallback 的高度與 QR 相同，展開時版面不會先塌一下再撐開 */}
+          <Suspense fallback={<div className="h-[192px] w-[192px] animate-pulse rounded-lg bg-gray-200 dark:bg-zinc-700" />}>
+            <CryptoQrCode value={method.address} />
+          </Suspense>
+          <span className="text-[11px] text-muted-foreground">{t('donate.qrHint', { name: label })}</span>
+        </div>
+      )}
+    </div>
   );
 }
 
 export function DonationDialog({ open, onOpenChange }: DonationDialogProps) {
   const { t } = useLanguage();
   const cryptoMethods = getAvailableCryptoMethods();
+  // 一次只展開一張 QR：六種幣全開的話彈窗會長到必須一直捲
+  const [openQrId, setOpenQrId] = useState<string | null>(null);
+
+  // 關掉彈窗時收起 QR，下次打開才不會停在上次展開的那一列
+  useEffect(() => {
+    if (!open) setOpenQrId(null);
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -181,7 +225,14 @@ export function DonationDialog({ open, onOpenChange }: DonationDialogProps) {
               <p className="text-xs text-muted-foreground">{t('donate.cryptoHint')}</p>
               <div className="space-y-2">
                 {cryptoMethods.map((method) => (
-                  <CryptoRow key={method.id} method={method} />
+                  <CryptoRow
+                    key={method.id}
+                    method={method}
+                    qrOpen={openQrId === method.id}
+                    onToggleQr={() =>
+                      setOpenQrId((current) => (current === method.id ? null : method.id))
+                    }
+                  />
                 ))}
               </div>
             </div>
