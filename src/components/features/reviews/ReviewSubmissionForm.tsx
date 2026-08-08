@@ -57,9 +57,11 @@ import {
   ChevronRight,
   Smile,
   Frown,
-  Calendar
+  Calendar,
+  Heart
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { DonationDialog } from '@/components/common/DonationDialog';
 import { CourseService, Course, Term, Review, TeachingRecord, InstructorDetail, Instructor } from '@/services/api/courseService';
 import { GradeBadge } from '@/components/ui/GradeBadge';
 import { HybridMarkdownEditor } from '@/components/ui/hybrid-markdown-editor';
@@ -576,6 +578,10 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const pendingRestoreStepRef = useRef<number | null>(null);
   const draftRestoreAttemptedRef = useRef<boolean>(false);
   const draftClearedRef = useRef<boolean>(false);
+  // 新增評論成功後要去的頁面。不在 handleSubmit 裡就 navigate，是因為那會立刻把
+  // 整個表單（連同慶祝彈窗）卸載，慶祝畫面等於閃都沒閃就沒了；改成等使用者關掉
+  // 彈窗（或關掉從彈窗開出去的捐款視窗）才導頁。
+  const pendingNavigateRef = useRef<string | null>(null);
   // 編輯模式：伺服器版本快照，內容相同時不寫草稿（避免每次編輯都出現還原橫幅）
   const populatedSnapshotRef = useRef<string | null>(null);
 
@@ -2638,8 +2644,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
           title: t('common.success'),
           description: t('review.submitSuccess'),
         });
-        // Navigate back to course detail page
-        navigate(`/courses/${selectedCourse}`);
+        // Navigate back to course detail page（延後到慶祝彈窗關閉，見 pendingNavigateRef）
+        pendingNavigateRef.current = `/courses/${selectedCourse}`;
       }
       return true;
     } catch (error) {
@@ -2659,6 +2665,31 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
   const [showMainExitConfirm, setShowMainExitConfirm] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
+  const [showDonation, setShowDonation] = useState(false);
+
+  // 慶祝彈窗（或其後開出的捐款彈窗）關閉時才真正離開表單頁
+  const finishCelebration = useCallback(() => {
+    setShowCelebration(false);
+    const target = pendingNavigateRef.current;
+    pendingNavigateRef.current = null;
+    if (target) navigate(target);
+  }, [navigate]);
+
+  // 從慶祝彈窗開捐款彈窗：先收掉慶祝彈窗（避免兩層 modal 疊在一起搶焦點），
+  // 導頁再往後推到捐款彈窗關閉為止。
+  const handleOpenDonation = useCallback(() => {
+    setShowCelebration(false);
+    setShowDonation(true);
+  }, []);
+
+  const handleDonationOpenChange = useCallback((open: boolean) => {
+    setShowDonation(open);
+    if (!open) {
+      const target = pendingNavigateRef.current;
+      pendingNavigateRef.current = null;
+      if (target) navigate(target);
+    }
+  }, [navigate]);
 
   // Handle exit for main review form
   const handleMainExit = () => {
@@ -2676,11 +2707,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       setShowSubmitConfirm(false);
       // Only show celebration effect after a genuinely successful submission
       if (success) {
+        // 不再自動關閉：彈窗現在承載「完成」按鈕與支持專案的入口，需要使用者自己收掉
         setShowCelebration(true);
-        // Hide celebration after 2.5 seconds
-        setTimeout(() => {
-          setShowCelebration(false);
-        }, 2500);
       }
     } catch (error) {
       // If submission fails, just close the dialog
@@ -4194,7 +4222,7 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       </AlertDialog>
 
       {/* Celebration Dialog */}
-      <AlertDialog open={showCelebration} onOpenChange={setShowCelebration}>
+      <AlertDialog open={showCelebration} onOpenChange={(open) => { if (!open) finishCelebration(); }}>
         <AlertDialogContent className="bg-white dark:bg-gray-900 text-center sm:rounded-lg rounded-xl m-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <AlertDialogHeader className="items-center">
             <div className="relative mb-4">
@@ -4218,8 +4246,29 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="text-4xl animate-bounce mt-2">🎉</div>
+
+          {/* 支持專案入口：只在新增評論後出現，刻意做成一行淡色文字連結，
+              不做成按鈕，才不會跟「完成」搶視線或變成勸募。 */}
+          {!isEditMode && (
+            <button
+              type="button"
+              onClick={handleOpenDonation}
+              className="mx-auto mt-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-pink-600 dark:hover:text-pink-400"
+            >
+              <Heart className="h-4 w-4 shrink-0" />
+              {t('donate.afterReview')}
+            </button>
+          )}
+
+          <AlertDialogFooter className="pt-2 sm:justify-center">
+            <AlertDialogAction onClick={finishCelebration} className="min-w-32">
+              {t('common.close')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DonationDialog open={showDonation} onOpenChange={handleDonationOpenChange} />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { BookOpen, GraduationCap, Star, Settings, Languages, LogOut, Menu, MessageSquareText, MessagesSquare, Heart, UserCircle, Mail, BookText, Calculator, BookCheck, CalendarRange } from 'lucide-react';
+import { BookOpen, GraduationCap, Star, Settings, Languages, LogOut, Menu, MessageSquareText, MessagesSquare, Heart, HeartHandshake, UserCircle, Mail, BookText, Calculator, BookCheck, CalendarRange } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { APP_CONFIG } from '@/utils/constants/config';
@@ -8,6 +8,7 @@ import { LanguageSwitcher, type Language } from '@/components/common/LanguageSwi
 import { useState, useEffect, useRef } from 'react';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
 import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
+import { SidebarDonateButton } from '@/components/common/DonationDialog';
 
 // 自定義 Home 圖示組件
 const HomeIcon = ({ className }: { className?: string }) => (
@@ -453,6 +454,9 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
         <div className={`p-4 md:px-2 ${!shouldShowText ? 'md:py-2' : isCompact ? 'md:py-2' : 'md:py-4'}`}>
           {shouldShowText ? (
             <div className="space-y-1">
+              {/* 支持專案 - 被動入口，點擊才開啟捐款彈窗 */}
+              <SidebarDonateButton showText />
+
               {/* 語言切換器 - 始終顯示 */}
               <div className="flex items-center justify-center px-3 py-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors">
                 <LanguageSwitcher onLanguageChange={handleLanguageChange} currentLanguage={language} variant="pills" />
@@ -466,6 +470,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
           ) : (
             /* 摺疊狀態下的圖標版本 */
             <div className="space-y-1">
+              <SidebarDonateButton showText={false} />
               <div className="flex justify-center p-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors">
                 <LanguageSwitcher onLanguageChange={handleLanguageChange} currentLanguage={language} variant="vertical-pills" />
               </div>

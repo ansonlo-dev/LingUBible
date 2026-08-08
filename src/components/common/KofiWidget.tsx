@@ -49,31 +49,8 @@ export function KofiWidget() {
   return null; // Ko-fi 小工具會自動渲染到頁面上
 }
 
-// Footer 中使用的 Ko-fi 按鈕組件（與 OpenStatusWidget 相同樣式）
-export function FooterKofiButton({ className = '' }: { className?: string }) {
-  const { t } = useLanguage();
-
-  const handleDonate = () => {
-    window.open('https://ko-fi.com/lingubible', '_blank', 'noopener,noreferrer');
-  };
-
-  return (
-    <ResponsiveTooltip content={t('kofi.supportProject') || 'Support this project'}>
-      <button
-        onClick={handleDonate}
-        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-300 hover:scale-105 hover:shadow-md bg-gradient-to-r from-pink-100 to-rose-100 dark:from-pink-900/50 dark:to-rose-900/50 border border-pink-200/60 dark:border-pink-700/60 text-pink-700 dark:text-red-400 hover:from-pink-200 hover:to-rose-200 dark:hover:from-pink-800/60 dark:hover:to-rose-800/60 hover:border-pink-300 dark:hover:border-pink-600 whitespace-nowrap cursor-help ${className}`}
-      >
-      {/* Ko-fi 標誌圖片 */}
-      <img 
-        src="/logomarkLogo.webp" 
-        alt="Ko-fi" 
-        className="w-4 h-4 object-contain flex-shrink-0"
-      />
-      <span className="font-semibold text-xs">{t('kofi.donate') || 'Donate'}</span>
-    </button>
-    </ResponsiveTooltip>
-  );
-}
+// Footer 的捐款膠囊已改為 DonationDialog 裡的 FooterDonateButton：現在有 Ko-fi
+// 以外的方式（加密貨幣），單純開 Ko-fi 連結的按鈕不再適用。
 
 // 備用的自定義 Ko-fi 按鈕組件（如果需要更多控制）
 export function CustomKofiButton() {
