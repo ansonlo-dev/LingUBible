@@ -23,20 +23,21 @@ export interface CryptoDonationMethod {
   network?: string;
   /** 錢包地址。留空 = 尚未提供，該列不會渲染。 */
   address: string;
-  /** 圓形徽章上的字符（Unicode 幣別符號，避免為了幾個圖示多打包 SVG）。 */
+  /** 官方圖示載入前（或該幣種沒有圖示時）顯示的備援字符。 */
   glyph: string;
   /**
-   * 徽章底色。刻意寫死十六進位而不是走 Tailwind 色階：這些是幣種的品牌色，
-   * 跟主題無關，深淺色模式下都用同一個顏色。
+   * 品牌色。同時用在整列的底色（淡色疊加）與圖示載入前的備援圓底。刻意寫死
+   * 十六進位而不是走 Tailwind 色階：這是幣種的品牌色，跟深淺色主題無關。
    */
   color: string;
-  /** 徽章字色。預設白字；黃／金色系的品牌色上白字對比不足，改用深色。 */
-  fg?: string;
+  /** 是否為主要幣種：不用展開就直接列在 Ko-fi 下面。 */
+  primary?: boolean;
 }
 
 export const CRYPTO_DONATION_METHODS: CryptoDonationMethod[] = [
   {
     id: 'btc',
+    primary: true,
     ticker: 'BTC',
     address: 'bc1qj02ac5ev682x53fplwl3428p5r69mzagsjz4lk',
     glyph: '₿',
@@ -44,6 +45,7 @@ export const CRYPTO_DONATION_METHODS: CryptoDonationMethod[] = [
   },
   {
     id: 'eth',
+    primary: true,
     ticker: 'ETH',
     address: '0x0357d369d45Effe1D3eD7b8aD12C2ecCe3F8184d',
     glyph: 'Ξ',
@@ -52,20 +54,22 @@ export const CRYPTO_DONATION_METHODS: CryptoDonationMethod[] = [
   {
     // 與 eth 同一個 EVM 帳戶：同一把私鑰在以太坊主網上收原生幣與 ERC20 代幣
     id: 'usdt-erc20',
+    primary: true,
     ticker: 'USDT',
     network: 'ERC20',
     address: '0x0357d369d45Effe1D3eD7b8aD12C2ecCe3F8184d',
     glyph: '₮',
-    color: '#26A17B',
+    color: '#009393',
   },
   {
     // 與 trx 同一個 TRON 帳戶
     id: 'usdt-trc20',
+    primary: true,
     ticker: 'USDT',
     network: 'TRC20',
     address: 'THCM3Wjjwd6ReUathuKnyfjaDcvUwSJWUC',
     glyph: '₮',
-    color: '#26A17B',
+    color: '#009393',
   },
   {
     id: 'sol',
@@ -79,7 +83,7 @@ export const CRYPTO_DONATION_METHODS: CryptoDonationMethod[] = [
     ticker: 'TRX',
     address: 'THCM3Wjjwd6ReUathuKnyfjaDcvUwSJWUC',
     glyph: 'T',
-    color: '#EF0027',
+    color: '#C4342B',
   },
   {
     id: 'gram',
@@ -87,7 +91,7 @@ export const CRYPTO_DONATION_METHODS: CryptoDonationMethod[] = [
     network: 'TON',
     address: 'UQCXzRzkqkXXkzq_pUm54dLPrdPW8CRG-KlVzjSubG0unyuD',
     glyph: '◈',
-    color: '#0098EA',
+    color: '#30A1F5',
   },
   {
     id: 'bnb',
@@ -96,7 +100,6 @@ export const CRYPTO_DONATION_METHODS: CryptoDonationMethod[] = [
     address: '0x5a6A922F36707ba558Eaf0c14B6cc8B0a2728f03',
     glyph: '◆',
     color: '#F0B90B',
-    fg: '#1B1B1B',
   },
   {
     id: 'doge',
@@ -104,7 +107,6 @@ export const CRYPTO_DONATION_METHODS: CryptoDonationMethod[] = [
     address: 'DPmDppqWZ34UqJktXvHLauXQuuWrteL4C5',
     glyph: 'Ð',
     color: '#C2A633',
-    fg: '#1B1B1B',
   },
   {
     id: 'xrp',
@@ -126,7 +128,6 @@ export const CRYPTO_DONATION_METHODS: CryptoDonationMethod[] = [
     address: 't1Rve5CMcqfBb2yaFDzRTVF9nBTwKPNaRY3',
     glyph: 'ⓩ',
     color: '#ECB244',
-    fg: '#1B1B1B',
   },
 ];
 

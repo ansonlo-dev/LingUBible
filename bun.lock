@@ -37,6 +37,7 @@
         "@radix-ui/react-toggle-group": "^1.1.0",
         "@radix-ui/react-tooltip": "^1.1.4",
         "@tanstack/react-query": "^5.56.2",
+        "@web3icons/react": "^4.1.20",
         "appwrite": "^19.0.0",
         "bad-words-chinese": "^1.0.2",
         "baseline-browser-mapping": "^2.11.6",
@@ -576,6 +577,10 @@
     "@vue/server-renderer": ["@vue/server-renderer@3.5.35", "", { "dependencies": { "@vue/compiler-ssr": "3.5.35", "@vue/shared": "3.5.35" }, "peerDependencies": { "vue": "3.5.35" } }, "sha512-NkebSOYdB97wi8OQcO3HqzZSlymJi/aWsN/7h74OSVhRTm6qGs3Jp3e0rCXynmWwSlKeRrnlIug+ilYoHBmQDA=="],
 
     "@vue/shared": ["@vue/shared@3.5.35", "", {}, "sha512-zSbjL7gRXwks2ZQLRGCajBtBXEOXW9Ddhn/HvSdrGkE2dqGnumzW8XtusRrxrE9LvqtiqDXQ+A60Hp6mvdYxfA=="],
+
+    "@web3icons/common": ["@web3icons/common@0.11.49", "", {}, "sha512-hQOvBWe8GIrUTSvwhBejEC9/Nlt5KWt2oVDgviM5NZxLs3H7ubwrmYQadZuHsD0d+RUcb2LOX/FNJrwci4hMCw=="],
+
+    "@web3icons/react": ["@web3icons/react@4.1.20", "", { "dependencies": { "@web3icons/common": "0.11.49" }, "peerDependencies": { "react": "^18.0.0 || ^19.0.0" } }, "sha512-8Hn5VZo3hdJQymc3636JxxpF8a1dk5pCvwd6rHMa633Ae+UmUpP2AAAsiVLQp/C+1AZSUCWaziWh+3FMJwRHVw=="],
 
     "abbrev": ["abbrev@1.1.1", "", {}, "sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q=="],
 

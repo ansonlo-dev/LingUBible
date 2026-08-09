@@ -83,9 +83,16 @@ export default defineConfig(({ command, mode }) => {
               // qrcode.react 只在捐款彈窗展開 QR 碼時才會用到，同樣走動態
               // import；獨立成分塊，避免為了幾張 QR 碼讓所有人首屏多背一包。
               if (id.includes('qrcode.react')) return 'qrcode';
+              // 幣種圖示同理，只有捐款彈窗打開時才需要
+              if (id.includes('@web3icons')) return 'web3icons';
               if (id.includes('@radix-ui') || id.includes('lucide-react')) return 'ui';
               return 'vendor';
             }
+            // 這兩個包裝元件必須跟它們的套件放進同一個分塊。否則 app 程式碼
+            // 一律被歸到 'app'，React.lazy 的界線會被抹平，套件反而變成 index
+            // 的靜態相依（index.html 會冒出 modulepreload，首屏照樣下載）。
+            if (id.includes('src/components/common/CryptoIcon')) return 'web3icons';
+            if (id.includes('src/components/common/CryptoQrCode')) return 'qrcode';
             // 語言文件延遲載入
             if (id.includes('src/locales/')) return 'locale';
             return 'app';

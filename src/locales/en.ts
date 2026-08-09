@@ -1625,10 +1625,10 @@ export default {
   'donate.tooltip': 'Support this project',
   'donate.sidebar': 'Support us',
   'donate.title': 'Support LingUBible',
-  'donate.description': 'LingUBible is free and open source. If it saved you some time, you can buy the developer a coffee — donations go towards the running costs (servers, database, domain and so on). Entirely optional, and nothing is locked behind it.',
+  'donate.description': 'LingUBible is free and open source. If you would like to chip in, you can donate through Ko-fi (credit card or PayPal), or with crypto if you prefer. Donations go towards the running costs — servers, database, domain and so on. Entirely optional, and nothing is locked behind it.',
   'donate.kofiHint': 'One-off or monthly, card or PayPal',
-  'donate.cryptoTitle': 'Crypto',
-  'donate.cryptoHint': 'Tap an address to copy it, or tap the icon on the right for a QR code.',
+  'donate.showMore': 'More crypto options ({count})',
+  'donate.showLess': 'Show fewer',
   'donate.showQr': 'Show {name} QR code',
   'donate.qrHint': 'Scan with your wallet to send {name}',
   // 幣種全名（代號與網路名不翻譯，見 src/config/donation.ts）
