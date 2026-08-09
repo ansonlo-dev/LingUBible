@@ -46,8 +46,7 @@ import {
   MessageCircle,
   Award,
   Target,
-  Sparkles,
-  CheckCircle2,
+  Check,
   CheckCircle,
   XCircle,
   X,
@@ -2640,10 +2639,8 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
         // 提交成功即清除草稿，並停止後續的自動儲存
         draftClearedRef.current = true;
         if (user?.$id) clearReviewDraft(getReviewDraftKey(user.$id));
-        toast({
-          title: t('common.success'),
-          description: t('review.submitSuccess'),
-        });
+        // 不再另外跳成功 toast：接著就會開慶祝彈窗，兩者訊息一樣，
+        // 同時出現只會讓畫面角落多一個重複通知。
         // Navigate back to course detail page（延後到慶祝彈窗關閉，見 pendingNavigateRef）
         pendingNavigateRef.current = `/courses/${selectedCourse}`;
       }
@@ -4225,15 +4222,12 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
       <AlertDialog open={showCelebration} onOpenChange={(open) => { if (!open) finishCelebration(); }}>
         <AlertDialogContent className="bg-white dark:bg-gray-900 text-center sm:rounded-lg rounded-xl m-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
           <AlertDialogHeader className="items-center">
-            <div className="relative mb-4">
-              {/* Animated sparkles background */}
-              <div className="absolute inset-0 flex justify-center items-center">
-                <Sparkles className="h-16 w-16 text-yellow-400 animate-pulse" />
-              </div>
-              {/* Main success icon */}
-              <div className="relative z-10 flex justify-center">
-                <CheckCircle2 className="h-20 w-20 text-green-500 animate-bounce" />
-              </div>
+            {/* 單一焦點的成功徽章：脈衝環與打勾同心，不會像先前星星／打勾那樣互相穿插 */}
+            <div className="mb-4 flex justify-center">
+              <span className="success-badge" aria-hidden="true">
+                <span className="success-badge__ring" />
+                <Check className="success-badge__check h-9 w-9 sm:h-10 sm:w-10" strokeWidth={3} />
+              </span>
             </div>
             <AlertDialogTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
               {isEditMode ? t('review.updateSuccess') : t('review.submitSuccess')}
@@ -4245,9 +4239,9 @@ const ReviewSubmissionForm = ({ preselectedCourseCode, editReviewId }: ReviewSub
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="text-4xl animate-bounce mt-2">🎉</div>
+          <div className="celebration-emoji mt-2 text-4xl" aria-hidden="true">🎉</div>
 
-          {/* 支持專案入口：只在新增評論後出現，刻意做成一行淡色文字連結，
+          {/* 贊助入口：只在新增評論後出現，刻意做成一行淡色文字連結，
               不做成按鈕，才不會跟「完成」搶視線或變成勸募。 */}
           {!isEditMode && (
             <button

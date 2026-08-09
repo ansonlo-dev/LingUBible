@@ -1736,6 +1736,107 @@ div[style*="position: fixed"][style*="right: 14px"] {
     }
   }
 
+  /* 成功徽章（評論送出後的慶祝彈窗）
+     以前是「發光星星」絕對定位在打勾圖示後面，兩個圖示大小不同又各自跳動，
+     邊角會互相穿插。改成單一焦點：圓形底色 + 打勾，脈衝環是同心圓，
+     永遠在圓形底下擴散，不可能跟打勾重疊。 */
+  .success-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 9999px;
+    background-color: rgba(34, 197, 94, 0.12);
+    color: rgb(22, 163, 74);
+    animation: success-badge-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  .dark .success-badge {
+    background-color: rgba(34, 197, 94, 0.16);
+    color: rgb(74, 222, 128);
+  }
+
+  @media (min-width: 640px) {
+    .success-badge {
+      width: 5rem;
+      height: 5rem;
+    }
+  }
+
+  /* 脈衝環：與徽章同心，只往外擴散 */
+  .success-badge__ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    border: 2px solid currentColor;
+    opacity: 0;
+    animation: success-badge-ripple 2s ease-out 0.35s infinite;
+  }
+
+  .success-badge__check {
+    position: relative;
+    z-index: 1;
+    animation: success-badge-check-in 0.4s ease-out 0.18s both;
+  }
+
+  /* 慶祝表情符號：改成只彈一次，不再無限跳動跟徽章搶注意力 */
+  .celebration-emoji {
+    animation: success-badge-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s both;
+  }
+
+  @keyframes success-badge-pop {
+    from {
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes success-badge-check-in {
+    0% {
+      opacity: 0;
+      transform: scale(0.4);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1.12);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes success-badge-ripple {
+    0% {
+      opacity: 0.5;
+      transform: scale(1);
+    }
+    70%,
+    100% {
+      opacity: 0;
+      transform: scale(1.4);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .success-badge,
+    .success-badge__check,
+    .celebration-emoji {
+      animation: none;
+    }
+
+    .success-badge__ring {
+      animation: none;
+      opacity: 0.3;
+    }
+  }
+
   /* 按鈕樣式修復 - 確保主要按鈕有正確的文字顏色 */
   .btn-primary {
     background-color: rgb(var(--primary));
