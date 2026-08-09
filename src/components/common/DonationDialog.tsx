@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
-import { Check, Copy, ExternalLink, Heart, HeartHandshake, QrCode } from 'lucide-react';
+import { Check, ChevronDown, Coins, Copy, ExternalLink, Heart, HeartHandshake, QrCode } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -72,10 +72,20 @@ function CryptoRow({
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const resetRef = useRef<ReturnType<typeof setTimeout>>();
+  const rowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => () => clearTimeout(resetRef.current), []);
 
-  const label = method.network ? `${method.name} (${method.network})` : method.name;
+  // 展開的是清單裡第 N 列時，QR 很可能落在彈窗可視範圍外；把整列捲進來
+  useEffect(() => {
+    if (qrOpen) {
+      rowRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }, [qrOpen]);
+
+  // 幣種全名走 i18n（比特幣／Bitcoin），代號與網路名不翻譯
+  const coinName = t(`donate.coin.${method.id}`);
+  const label = method.network ? `${method.ticker} (${method.network})` : method.ticker;
 
   const handleCopy = useCallback(async () => {
     const ok = await copyText(method.address);
@@ -97,7 +107,10 @@ function CryptoRow({
   }, [label, method.address, t, toast]);
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-gray-50/70 dark:border-zinc-700 dark:bg-zinc-800/60">
+    <div
+      ref={rowRef}
+      className="rounded-lg border border-gray-200 bg-gray-50/70 dark:border-zinc-700 dark:bg-zinc-800/60"
+    >
       <div className="flex items-center gap-1">
         {/* 複製的觸控目標刻意含整塊文字（而不是只有右邊的圖示），手機上好按很多 */}
         <button
@@ -107,8 +120,8 @@ function CryptoRow({
           className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg p-2.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-zinc-800"
         >
           <span
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-            style={{ backgroundColor: method.color }}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold"
+            style={{ backgroundColor: method.color, color: method.fg ?? '#ffffff' }}
             aria-hidden="true"
           >
             {method.glyph}
@@ -116,8 +129,10 @@ function CryptoRow({
 
           {/* min-w-0：沒有它的話 break-all 的地址會把 flex 軌道撐爆，整列溢出彈窗 */}
           <span className="min-w-0 flex-1">
-            <span className="flex items-baseline gap-1.5">
-              <span className="text-sm font-semibold text-foreground">{method.name}</span>
+            {/* flex-wrap：窄螢幕上「代號 + 幣名 + 網路標籤」放不下時換行，不擠壓地址 */}
+            <span className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+              <span className="text-sm font-semibold text-foreground">{method.ticker}</span>
+              <span className="text-xs text-muted-foreground">{coinName}</span>
               {method.network && (
                 <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-zinc-700 dark:text-zinc-300">
                   {method.network}
@@ -154,7 +169,7 @@ function CryptoRow({
       {qrOpen && (
         <div className="flex flex-col items-center gap-2 border-t border-gray-200 px-2.5 py-3 dark:border-zinc-700">
           {/* fallback 的高度與 QR 相同，展開時版面不會先塌一下再撐開 */}
-          <Suspense fallback={<div className="h-[192px] w-[192px] animate-pulse rounded-lg bg-gray-200 dark:bg-zinc-700" />}>
+          <Suspense fallback={<div className="h-[216px] w-[216px] animate-pulse rounded-lg bg-gray-200 dark:bg-zinc-700" />}>
             <CryptoQrCode value={method.address} />
           </Suspense>
           <span className="text-[11px] text-muted-foreground">{t('donate.qrHint', { name: label })}</span>
@@ -167,12 +182,18 @@ function CryptoRow({
 export function DonationDialog({ open, onOpenChange }: DonationDialogProps) {
   const { t } = useLanguage();
   const cryptoMethods = getAvailableCryptoMethods();
-  // 一次只展開一張 QR：六種幣全開的話彈窗會長到必須一直捲
+  // 一次只展開一張 QR：全開的話彈窗會長到必須一直捲
   const [openQrId, setOpenQrId] = useState<string | null>(null);
+  // 十幾種幣的地址一次全攤開會變成一面「地址牆」，反而顯得在募款；預設收起，
+  // 想用加密貨幣的人自己點開，Ko-fi 也才留得住主要位置。
+  const [cryptoExpanded, setCryptoExpanded] = useState(false);
 
-  // 關掉彈窗時收起 QR，下次打開才不會停在上次展開的那一列
+  // 關掉彈窗時回到初始狀態，下次打開才不會停在上次展開的那一列
   useEffect(() => {
-    if (!open) setOpenQrId(null);
+    if (!open) {
+      setOpenQrId(null);
+      setCryptoExpanded(false);
+    }
   }, [open]);
 
   return (
@@ -216,25 +237,44 @@ export function DonationDialog({ open, onOpenChange }: DonationDialogProps) {
 
           {cryptoMethods.length > 0 && (
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCryptoExpanded((v) => !v)}
+                aria-expanded={cryptoExpanded}
+                className="flex w-full items-center gap-2 rounded-md py-1 text-left transition-colors hover:text-foreground"
+              >
+                <Coins className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {t('donate.cryptoTitle')}
                 </span>
+                <span className="rounded bg-gray-200 px-1.5 py-0.5 text-[10px] font-medium text-gray-600 dark:bg-zinc-700 dark:text-zinc-300">
+                  {cryptoMethods.length}
+                </span>
                 <span className="h-px flex-1 bg-border" />
-              </div>
-              <p className="text-xs text-muted-foreground">{t('donate.cryptoHint')}</p>
-              <div className="space-y-2">
-                {cryptoMethods.map((method) => (
-                  <CryptoRow
-                    key={method.id}
-                    method={method}
-                    qrOpen={openQrId === method.id}
-                    onToggleQr={() =>
-                      setOpenQrId((current) => (current === method.id ? null : method.id))
-                    }
-                  />
-                ))}
-              </div>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${
+                    cryptoExpanded ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+
+              {cryptoExpanded && (
+                <>
+                  <p className="text-xs text-muted-foreground">{t('donate.cryptoHint')}</p>
+                  <div className="space-y-2">
+                    {cryptoMethods.map((method) => (
+                      <CryptoRow
+                        key={method.id}
+                        method={method}
+                        qrOpen={openQrId === method.id}
+                        onToggleQr={() =>
+                          setOpenQrId((current) => (current === method.id ? null : method.id))
+                        }
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
 
