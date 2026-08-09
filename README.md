@@ -430,6 +430,27 @@ If you find **LingUBible** helpful for your academic journey, consider supportin
 
 [![Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
 
+### 🪙 Crypto
+
+Prefer crypto? Any of these works. Donations go towards the running costs — servers, database and domain.
+
+| Coin | Network | Address |
+|:---|:---|:---|
+| **BTC** Bitcoin | Bitcoin | `bc1qj02ac5ev682x53fplwl3428p5r69mzagsjz4lk` |
+| **ETH** Ethereum | Ethereum | `0x0357d369d45Effe1D3eD7b8aD12C2ecCe3F8184d` |
+| **USDT** Tether | Ethereum · ERC20 | `0x0357d369d45Effe1D3eD7b8aD12C2ecCe3F8184d` |
+| **USDT** Tether | Tron · TRC20 | `THCM3Wjjwd6ReUathuKnyfjaDcvUwSJWUC` |
+| **SOL** Solana | Solana | `9sA9FgqtGfpKZmBv2SSTvfAWkxHgqrMkXSeA1NNKsi5y` |
+| **TRX** Tron | Tron | `THCM3Wjjwd6ReUathuKnyfjaDcvUwSJWUC` |
+| **GRAM** Gram | TON | `UQCXzRzkqkXXkzq_pUm54dLPrdPW8CRG-KlVzjSubG0unyuD` |
+| **BNB** | BNB Smart Chain · Ethereum | `0x5a6A922F36707ba558Eaf0c14B6cc8B0a2728f03` |
+| **DOGE** Dogecoin | Dogecoin | `DPmDppqWZ34UqJktXvHLauXQuuWrteL4C5` |
+| **XRP** | XRP Ledger | `rKQidLa6dUX7ucYgHUimtwe9vwLMWvNCEK` |
+| **LTC** Litecoin | Litecoin | `ltc1qfrfa9fgqyr89d5d9ee5cr3sptcmkwl94z00tfj` |
+| **ZEC** Zcash | Zcash · transparent | `t1Rve5CMcqfBb2yaFDzRTVF9nBTwKPNaRY3` |
+
+> **Note** · ETH and USDT (ERC20) share one EVM address, and TRX and USDT (TRC20) share one Tron address — that is expected, a single account receives both. The Zcash address is a transparent (t-addr) one, so shielded transfers are not supported.
+
 ### 🎯 Other Ways to Support
 
 - ⭐ **Star this repository** - Help others discover LingUBible

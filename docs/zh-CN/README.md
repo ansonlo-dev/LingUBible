@@ -421,6 +421,27 @@ bun run project:structure # 打印 src/ 目录树
 
 [![Ko-fi](https://img.shields.io/badge/支持我们-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
 
+### 🪙 加密货币
+
+习惯用加密货币的话，以下任何一种都可以。捐款会用来支付运营开销——服务器、数据库与域名。
+
+| 币种 | 网络 | 地址 |
+|:---|:---|:---|
+| **BTC** 比特币 | Bitcoin | `bc1qj02ac5ev682x53fplwl3428p5r69mzagsjz4lk` |
+| **ETH** 以太币 | Ethereum | `0x0357d369d45Effe1D3eD7b8aD12C2ecCe3F8184d` |
+| **USDT** 泰达币 | Ethereum · ERC20 | `0x0357d369d45Effe1D3eD7b8aD12C2ecCe3F8184d` |
+| **USDT** 泰达币 | Tron · TRC20 | `THCM3Wjjwd6ReUathuKnyfjaDcvUwSJWUC` |
+| **SOL** 索拉纳币 | Solana | `9sA9FgqtGfpKZmBv2SSTvfAWkxHgqrMkXSeA1NNKsi5y` |
+| **TRX** 波场币 | Tron | `THCM3Wjjwd6ReUathuKnyfjaDcvUwSJWUC` |
+| **GRAM** Gram 币 | TON | `UQCXzRzkqkXXkzq_pUm54dLPrdPW8CRG-KlVzjSubG0unyuD` |
+| **BNB** 币安币 | BNB Smart Chain · Ethereum | `0x5a6A922F36707ba558Eaf0c14B6cc8B0a2728f03` |
+| **DOGE** 狗狗币 | Dogecoin | `DPmDppqWZ34UqJktXvHLauXQuuWrteL4C5` |
+| **XRP** 瑞波币 | XRP Ledger | `rKQidLa6dUX7ucYgHUimtwe9vwLMWvNCEK` |
+| **LTC** 莱特币 | Litecoin | `ltc1qfrfa9fgqyr89d5d9ee5cr3sptcmkwl94z00tfj` |
+| **ZEC** 大零币 | Zcash · 透明地址 | `t1Rve5CMcqfBb2yaFDzRTVF9nBTwKPNaRY3` |
+
+> **提醒** · ETH 与 USDT（ERC20）共用同一个 EVM 地址，TRX 与 USDT（TRC20）共用同一个波场地址，这是正常的，同一个账户两种都收得到。大零币是透明地址（t-addr），不支持遮蔽交易。
+
 ### 🎯 其他支持方式
 
 - ⭐ **为此仓库点星** - 帮助其他人发现 LingUBible
