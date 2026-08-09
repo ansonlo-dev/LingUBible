@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Moon, Sun } from 'lucide-react';
 import { theme } from '@/lib/utils';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // 主題類型（只保留亮色與深色）
 type ThemeMode = 'light' | 'dark';
@@ -31,10 +32,11 @@ function setTheme(mode: ThemeMode) {
 }
 
 interface ThemeToggleProps {
-  variant?: 'button' | 'toggle';
+  variant?: 'button' | 'toggle' | 'compact' | 'icon';
 }
 
 export function ThemeToggle({ variant = 'button' }: ThemeToggleProps) {
+  const { t } = useLanguage();
   // 當前要高亮的模式：已明確選擇則用該值，否則跟隨系統（首次訪問預設）
   const [currentMode, setCurrentMode] = useState<ThemeMode>(() => {
     const stored = theme.get();
@@ -82,6 +84,64 @@ export function ThemeToggle({ variant = 'button' }: ThemeToggleProps) {
     setCurrentMode(mode);
     setTheme(mode);
   };
+
+  // 緊湊型分段控制：頂欄（桌面）使用，兩個選項都可見、一鍵直達
+  if (variant === 'compact') {
+    return (
+      <div role="group" aria-label={t('theme.light') + ' / ' + t('theme.dark')} className="flex items-center gap-0.5 rounded-lg bg-secondary/50 p-0.5">
+        <button
+          type="button"
+          onClick={() => handleThemeChange('light')}
+          aria-label={t('theme.light')}
+          aria-pressed={currentMode === 'light'}
+          title={t('theme.light')}
+          className={`flex h-7 w-8 items-center justify-center rounded-md transition-colors ${
+            currentMode === 'light'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-gray-700'
+          }`}
+        >
+          <Sun className="h-4 w-4 stroke-2" />
+        </button>
+        <button
+          type="button"
+          onClick={() => handleThemeChange('dark')}
+          aria-label={t('theme.dark')}
+          aria-pressed={currentMode === 'dark'}
+          title={t('theme.dark')}
+          className={`flex h-7 w-8 items-center justify-center rounded-md transition-colors ${
+            currentMode === 'dark'
+              ? 'bg-primary text-primary-foreground shadow-sm'
+              : 'text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-gray-700'
+          }`}
+        >
+          <Moon className="h-4 w-4 stroke-2" />
+        </button>
+      </div>
+    );
+  }
+
+  // 單鍵切換：手機側邊欄使用，只有兩種主題所以一顆按鈕即可在兩者間切換
+  if (variant === 'icon') {
+    const nextMode: ThemeMode = currentMode === 'dark' ? 'light' : 'dark';
+    const label = nextMode === 'dark' ? t('theme.switchToDark') : t('theme.switchToLight');
+
+    return (
+      <button
+        type="button"
+        onClick={() => handleThemeChange(nextMode)}
+        aria-label={label}
+        title={label}
+        className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/50 text-foreground transition-colors hover:bg-secondary dark:hover:bg-gray-700"
+      >
+        {currentMode === 'dark' ? (
+          <Moon className="h-[1.15rem] w-[1.15rem] stroke-2" />
+        ) : (
+          <Sun className="h-[1.15rem] w-[1.15rem] stroke-2" />
+        )}
+      </button>
+    );
+  }
 
   if (variant === 'toggle') {
     return (

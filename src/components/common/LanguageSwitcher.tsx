@@ -13,7 +13,9 @@ export type Language = 'en' | 'zh-TW' | 'zh-CN';
 interface LanguageSwitcherProps {
   onLanguageChange: (language: Language) => void;
   currentLanguage: Language;
-  variant?: 'dropdown' | 'pills' | 'vertical-pills';
+  variant?: 'dropdown' | 'pills' | 'vertical-pills' | 'compact-pills';
+  /** 只在 compact-pills 生效：sm 用於頂欄，md 用於手機側邊欄（較大的觸控範圍） */
+  size?: 'sm' | 'md';
 }
 
 const languages = {
@@ -28,7 +30,7 @@ const languageShortNames = {
   en: 'EN',
 };
 
-export function LanguageSwitcher({ onLanguageChange, currentLanguage, variant = 'dropdown' }: LanguageSwitcherProps) {
+export function LanguageSwitcher({ onLanguageChange, currentLanguage, variant = 'dropdown', size = 'sm' }: LanguageSwitcherProps) {
   const [isDark, setIsDark] = useState(false);
 
   // 監聽主題變化
@@ -57,6 +59,38 @@ export function LanguageSwitcher({ onLanguageChange, currentLanguage, variant = 
 
     return () => observer.disconnect();
   }, []);
+
+  // 緊湊型分段控制：頂欄（桌面）與手機側邊欄共用，不撐滿寬度
+  if (variant === 'compact-pills') {
+    const isMd = size === 'md';
+    return (
+      <div
+        role="group"
+        aria-label="Language"
+        className={`flex items-center gap-0.5 rounded-lg bg-secondary/50 ${isMd ? 'p-1' : 'p-0.5'}`}
+      >
+        {Object.entries(languageShortNames).map(([code, shortName]) => (
+          <button
+            key={code}
+            type="button"
+            onClick={() => onLanguageChange(code as Language)}
+            aria-label={languages[code as Language]}
+            aria-pressed={currentLanguage === code}
+            title={languages[code as Language]}
+            className={`flex items-center justify-center rounded-md font-bold transition-colors ${
+              isMd ? 'h-7 min-w-[2rem] px-2 text-sm' : 'h-7 min-w-[1.75rem] px-1.5 text-xs'
+            } ${
+              currentLanguage === code
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:bg-secondary hover:text-foreground dark:hover:bg-gray-700'
+            }`}
+          >
+            {shortName}
+          </button>
+        ))}
+      </div>
+    );
+  }
 
   if (variant === 'pills') {
     return (

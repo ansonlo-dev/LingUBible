@@ -450,35 +450,25 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
           )}
         </nav>
 
-        {/* 底部設置區域 - 始終顯示語言和主題切換 */}
+        {/* 底部區域 - 手機版保留語言／主題切換（緊湊單列），桌面版已移至頂欄；支持專案永遠置底 */}
         <div className={`p-4 md:px-2 ${!shouldShowText ? 'md:py-2' : isCompact ? 'md:py-2' : 'md:py-4'}`}>
-          {shouldShowText ? (
-            <div className="space-y-1">
-              {/* 支持專案 - 被動入口，點擊才開啟捐款彈窗 */}
-              <SidebarDonateButton showText />
+          <div className="space-y-1">
+            {/* 語言與主題切換 - 僅手機版（桌面版顯示於頂欄使用者頭像左側） */}
+            {isMobile && (
+              <div className="flex items-center justify-center gap-2 px-1 py-1">
+                <LanguageSwitcher
+                  onLanguageChange={handleLanguageChange}
+                  currentLanguage={language}
+                  variant="compact-pills"
+                  size="md"
+                />
+                <ThemeToggle variant="icon" />
+              </div>
+            )}
 
-              {/* 語言切換器 - 始終顯示 */}
-              <div className="flex items-center justify-center px-3 py-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors">
-                <LanguageSwitcher onLanguageChange={handleLanguageChange} currentLanguage={language} variant="pills" />
-              </div>
-              
-              {/* 主題切換 - 始終顯示 */}
-              <div className="flex items-center justify-center px-3 py-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors">
-                <ThemeToggle variant="toggle" />
-              </div>
-            </div>
-          ) : (
-            /* 摺疊狀態下的圖標版本 */
-            <div className="space-y-1">
-              <SidebarDonateButton showText={false} />
-              <div className="flex justify-center p-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors">
-                <LanguageSwitcher onLanguageChange={handleLanguageChange} currentLanguage={language} variant="vertical-pills" />
-              </div>
-              <div className="flex justify-center p-2 rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors">
-                <ThemeToggle variant="button" />
-              </div>
-            </div>
-          )}
+            {/* 支持專案 - 被動入口，點擊才開啟捐款彈窗；置於最底部 */}
+            <SidebarDonateButton showText={shouldShowText} />
+          </div>
         </div>
       </div>
     </>

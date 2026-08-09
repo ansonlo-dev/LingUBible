@@ -485,6 +485,12 @@ export default {
   'language.traditionalChinese': 'Traditional Chinese',
   'language.simplifiedChinese': 'Simplified Chinese',
   'language.english': 'English',
+
+  // Theme
+  'theme.light': 'Light mode',
+  'theme.dark': 'Dark mode',
+  'theme.switchToLight': 'Switch to light mode',
+  'theme.switchToDark': 'Switch to dark mode',
   // Reviews
   'review.studentReviews': 'Student Reviews',
   'pages.courseDetail.invalidCourseCode': 'Invalid course code',

@@ -24,7 +24,7 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
   const { user } = useAuth();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [forceRender, setForceRender] = useState(0);
-  const { isMobilePortrait, isMobileLandscape } = useEnhancedResponsive();
+  const { isMobile, isMobilePortrait, isMobileLandscape } = useEnhancedResponsive();
 
 
   // 監聽強制用戶更新事件，確保 Header 立即反映用戶狀態變化
@@ -177,6 +177,18 @@ export function Header({ onToggleSidebar, isSidebarCollapsed }: HeaderProps) {
 
             {/* 右側區域 */}
             <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 min-w-fit">
+              {/* 語言與主題切換 - 僅桌面版（手機版仍留在側邊欄底部） */}
+              {!isMobile && (
+                <div className="flex items-center gap-1.5">
+                  <LanguageSwitcher
+                    onLanguageChange={setLanguage}
+                    currentLanguage={language}
+                    variant="compact-pills"
+                  />
+                  <ThemeToggle variant="compact" />
+                </div>
+              )}
+
               {/* 用戶菜單或登入按鈕 - 最高優先級，始終顯示 */}
               {user ? (
                 <UserMenu />

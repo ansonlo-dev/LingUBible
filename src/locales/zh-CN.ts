@@ -486,6 +486,13 @@ export default {
   // Languages
   'language.traditionalChinese': '繁体中文',
   'language.simplifiedChinese': '简体中文',
+  'language.english': '英文',
+
+  // Theme
+  'theme.light': '亮色模式',
+  'theme.dark': '深色模式',
+  'theme.switchToLight': '切换至亮色模式',
+  'theme.switchToDark': '切换至深色模式',
   // Reviews
   'review.studentReviews': '学生评论',
   'pages.courseDetail.invalidCourseCode': '课程代码无效',
