@@ -1577,7 +1577,7 @@ export default {
   'faq.signupRequiredQuestion': 'Do I need to sign up to view reviews?',
   'faq.signupRequiredAnswer': 'No, sign up is not required to view reviews. However, you must sign up with a valid Lingnan email address to post reviews, as well as to view study materials and past exam papers.',
   'faq.websiteFreeQuestion': 'Is this website free?',
-  'faq.websiteFreeAnswer': 'All services provided on this website are free. However, if you would like to support this project, you can click the donate button in the footer to help me cover part of the operational cost. Any help is highly appreciated.',
+  'faq.websiteFreeAnswer': 'All services provided on this website are free. However, if you would like to donate, you can click the donate button in the footer to help me cover part of the operational cost. Any help is highly appreciated.',
   // FAQ Section Categories
   'faq.section.account': 'Account & Registration',
   'faq.section.navigation': 'Navigation & Usage', 
@@ -1625,12 +1625,12 @@ export default {
   // 8. COMMON ELEMENTS - 通用元素
   // =============================================================================
   'kofi.donate': 'Donate',
-  'kofi.supportProject': 'Support this project',
+  'kofi.supportProject': 'Donate to this project',
   // 捐款 / 支持專案（DonationDialog）
-  'donate.button': 'Support',
-  'donate.tooltip': 'Support this project',
-  'donate.sidebar': 'Support us',
-  'donate.title': 'Support LingUBible',
+  'donate.button': 'Donate',
+  'donate.tooltip': 'Donate to this project',
+  'donate.sidebar': 'Donate',
+  'donate.title': 'Donate to LingUBible',
   'donate.description': 'LingUBible is free and open source. If you would like to chip in, you can donate through Ko-fi (credit card or PayPal), or with crypto if you prefer. Donations go towards the running costs — servers, database, domain and so on. Entirely optional, and nothing is locked behind it.',
   'donate.kofiHint': 'One-off or monthly, card or PayPal',
   'donate.showMore': 'More crypto options ({count})',

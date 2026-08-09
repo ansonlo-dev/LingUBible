@@ -22,7 +22,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=flat-square)](https://github.com/ansonlo-dev/LingUBible/graphs/commit-activity)
 
-[![Ko-fi](https://img.shields.io/badge/支持我們-Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
+[![Ko-fi](https://img.shields.io/badge/贊助-Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
 
 ---
 
@@ -401,9 +401,9 @@ bun run project:structure # 印出 src/ 目錄樹
 
 <div align="center">
 
-### 🌟 幫助我們讓 LingUBible 持續成長！
+### 🌟 幫助 LingUBible 持續成長！
 
-如果您覺得 **LingUBible** 對您的學習之路有所幫助，請考慮支持我們的開發工作。您的支持幫助我們：
+如果您覺得 **LingUBible** 對您的學習之路有所幫助，歡迎贊助這個專案的開發。您的贊助能幫助：
 
 - 🚀 **新增功能** - 持續改進平台
 - 🐛 **修復錯誤** - 維持穩定的使用體驗
@@ -411,7 +411,7 @@ bun run project:structure # 印出 src/ 目錄樹
 - 📱 **提升效能** - 最佳化使用者體驗
 - 🎨 **改善介面** - 打造更美觀的界面
 
-### ☕ 請我們喝杯咖啡
+### ☕ 請我喝杯咖啡
 
 <a href="https://ko-fi.com/lingubible" target="_blank">
   <img src="https://cdn.ko-fi.com/cdn/kofi2.png?v=3" alt="Buy Me A Coffee" height="50" width="210">
@@ -419,7 +419,7 @@ bun run project:structure # 印出 src/ 目錄樹
 
 **每一份貢獻，無論多小，都意義重大！🙏**
 
-[![Ko-fi](https://img.shields.io/badge/支持我們-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
+[![Ko-fi](https://img.shields.io/badge/贊助-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
 
 ### 🪙 加密貨幣
 

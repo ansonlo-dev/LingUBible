@@ -1562,7 +1562,7 @@ export default {
   'faq.signupRequiredQuestion': '我需要注册才能查看评论吗？',
   'faq.signupRequiredAnswer': '不需要，查看评论不需要注册。但要发表评论，以及查看学习资料和历届试题，用户必须使用有效的岭南大学电子邮件地址注册。',
   'faq.websiteFreeQuestion': '这个网站是免费的吗？',
-  'faq.websiteFreeAnswer': '本网站提供的所有服务均为免费。不过，如果您想支持这个项目，可以点击页脚的赞助按钮来帮助我承担部分运营成本。任何帮助都非常感谢。',
+  'faq.websiteFreeAnswer': '本网站提供的所有服务均为免费。不过，如果您愿意赞助，可以点击页脚的赞助按钮来帮助我承担部分运营成本。任何帮助都非常感谢。',
   // FAQ Section Categories
   'faq.section.account': '账户与注册',
   'faq.section.navigation': '导航与使用', 
@@ -1610,13 +1610,13 @@ export default {
   // 8. COMMON ELEMENTS - 通用元素
   // =============================================================================
   'kofi.donate': '赞助',
-  'kofi.supportProject': '支持这个项目',
+  'kofi.supportProject': '赞助这个项目',
   // 捐款 / 支持项目（DonationDialog）
-  'donate.button': '支持',
-  'donate.tooltip': '支持这个项目',
-  'donate.sidebar': '支持我们',
-  'donate.title': '支持 LingUBible',
-  'donate.description': 'LingUBible 完全免费、开源。如果你愿意支持，可以通过 Ko-fi（支持信用卡与 PayPal）赞助，或使用你习惯的加密货币。捐款会用来支付运营开销——服务器、数据库、域名等。纯属自愿，不会有任何功能被锁住。',
+  'donate.button': '赞助',
+  'donate.tooltip': '赞助这个项目',
+  'donate.sidebar': '赞助',
+  'donate.title': '赞助 LingUBible',
+  'donate.description': 'LingUBible 完全免费、开源。如果你愿意赞助，可以通过 Ko-fi（支持信用卡与 PayPal），或使用你习惯的加密货币。捐款会用来支付运营开销——服务器、数据库、域名等。纯属自愿，不会有任何功能被锁住。',
   'donate.kofiHint': '单次或每月赞助，支持信用卡与 PayPal',
   'donate.showMore': '更多加密货币（{count}）',
   'donate.showLess': '收起',

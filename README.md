@@ -20,7 +20,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=flat-square)](https://github.com/ansonlo-dev/LingUBible/graphs/commit-activity)
 
-[![Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
+[![Ko-fi](https://img.shields.io/badge/Donate%20on-Ko--fi-FF5E5B?style=flat-square&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
 
 ---
 
@@ -410,9 +410,9 @@ We welcome all forms of contributions, whether it's code, documentation, design,
 
 <div align="center">
 
-### 🌟 Help Us Keep LingUBible Growing!
+### 🌟 Help Keep LingUBible Growing!
 
-If you find **LingUBible** helpful for your academic journey, consider supporting our development efforts. Your support helps us:
+If you find **LingUBible** helpful for your academic journey, consider donating to support development. Your donation helps:
 
 - 🚀 **Add New Features** - Continuously improve the platform
 - 🐛 **Fix Bugs & Issues** - Maintain a stable experience
@@ -428,7 +428,7 @@ If you find **LingUBible** helpful for your academic journey, consider supportin
 
 **Every contribution, no matter how small, makes a difference! 🙏**
 
-[![Ko-fi](https://img.shields.io/badge/Support%20on-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
+[![Ko-fi](https://img.shields.io/badge/Donate%20on-Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi&logoColor=white)](https://ko-fi.com/lingubible)
 
 ### 🪙 Crypto
 
