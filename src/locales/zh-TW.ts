@@ -1030,6 +1030,7 @@ export default {
   'search.noResults': '找不到符合條件的課程',
   'search.noResultsDesc': '請嘗試不同的搜尋條件或清除篩選器',
   'search.startTyping': '輸入關鍵字開始搜索',
+  'search.shareExperience': '分享您的課程體驗',
   'search.history.title': '搜尋記錄',
   'search.history.clearAll': '清除全部',
   'search.history.done': '完成',
