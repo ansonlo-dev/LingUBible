@@ -157,6 +157,16 @@ const STATIC_PAGES = [
     body: '關於註冊資格、撰寫評價、評分標準與匿名保護的常見問題解答。',
   },
   {
+    route: '/changelog',
+    priority: '0.5',
+    changefreq: 'weekly',
+    title: '更新日誌｜LingUBible 的新功能與修復',
+    description:
+      'LingUBible 更新日誌：新功能、體驗優化、問題修復、效能提升與課程資料更新一覽，可依類型與日期篩選。',
+    h1: '更新日誌',
+    body: '查看 LingUBible 歷來的新功能、介面改進、問題修復與課程／時間表資料更新，並可依類型或日期範圍篩選。',
+  },
+  {
     route: '/contact',
     priority: '0.5',
     changefreq: 'monthly',

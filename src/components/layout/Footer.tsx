@@ -69,9 +69,12 @@ export function Footer() {
             </div>
             
             {/* Right side - Navigation Links and OpenStatus Badge */}
-            <div className="flex items-center space-x-6 text-sm">
+            <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 text-sm">
               <FooterDonateButton />
               <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
+              <Link to="/changelog" className="text-muted-foreground hover:text-foreground transition-colors">
+                {t('footer.changelog')}
+              </Link>
               <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.faq')}
               </Link>
@@ -148,7 +151,10 @@ export function Footer() {
                 </div>
               </div>
               
-              <div className="flex items-center space-x-4 text-sm">
+              <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm">
+                <Link to="/changelog" className="text-muted-foreground hover:text-foreground transition-colors">
+                  {t('footer.changelog')}
+                </Link>
                 <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
                   {t('footer.faq')}
                 </Link>
@@ -177,7 +183,10 @@ export function Footer() {
           </div>
           
           {/* Navigation Links - Mobile */}
-          <div className="flex justify-center space-x-6 text-sm">
+          <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
+            <Link to="/changelog" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+              {t('footer.changelog')}
+            </Link>
             <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               {t('footer.faq')}
             </Link>

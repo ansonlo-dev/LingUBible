@@ -46,6 +46,7 @@ import Terms from "./pages/legal/Terms";
 import Privacy from "./pages/legal/Privacy";
 import Contact from "./pages/legal/Contact";
 import FAQ from "./pages/legal/FAQ";
+import Changelog from "./pages/Changelog";
 import EmailPreview from "./pages/EmailPreview";
 import PerformanceTest from "./pages/PerformanceTest";
 
@@ -674,6 +675,7 @@ const RouterContent = ({
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/faq" element={<FAQ />} />
+                    <Route path="/changelog" element={<Changelog />} />
                     {/* 開發模式專用路由 */}
                     <Route 
                       path="/email-preview" 

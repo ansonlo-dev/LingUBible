@@ -34,6 +34,7 @@ export default {
   'footer.developedBy': '開發',
   'footer.contact': '聯絡',
   'footer.faq': '常見問題',
+  'footer.changelog': '更新日誌',
   'footer.terms': '條款',
   'footer.privacy': '隱私',
   'footer.githubTooltip': '在 GitHub 上查看原始碼',
@@ -2387,4 +2388,36 @@ export default {
 
   // Features
   'features.serviceLearning': '服務學習',
+
+  // =============================================================================
+  // CHANGELOG - 更新日誌
+  // =============================================================================
+  'changelog.title': '更新日誌',
+  'changelog.subtitle': 'LingUBible 每一次值得知道的更新，最新的排在最前。',
+  'changelog.meta': '共 {count} 項更新 · 最後更新於 {date}',
+  'changelog.filters': '篩選',
+  'changelog.filter.all': '全部',
+  'changelog.type.feature': '新功能',
+  'changelog.type.improvement': '體驗優化',
+  'changelog.type.fix': '問題修復',
+  'changelog.type.performance': '效能提升',
+  'changelog.type.data': '資料更新',
+  'changelog.type.security': '安全與私隱',
+  'changelog.range.label': '期間',
+  'changelog.range.all': '全部時間',
+  'changelog.range.30d': '最近 30 天',
+  'changelog.range.90d': '最近 90 天',
+  'changelog.range.365d': '最近一年',
+  'changelog.range.custom': '自訂',
+  'changelog.range.from': '由',
+  'changelog.range.to': '至',
+  'changelog.sort.newest': '最新在前',
+  'changelog.sort.oldest': '最舊在前',
+  'changelog.reset': '重設',
+  'changelog.showing': '顯示 {count} 項，共 {total} 項更新',
+  'changelog.empty.title': '沒有符合篩選條件的更新',
+  'changelog.empty.desc': '試試其他類型，或放寬日期範圍。',
+  'changelog.note': '此清單經人手整理，純技術性與內部改動不會列出。',
+  'changelog.viewCommits': '在 GitHub 查看完整提交記錄',
+  'share.text.changelog': '看看 LingUBible 有什麼新功能 —— 完整的更新日誌，涵蓋新功能、修復與資料更新。',
 };
