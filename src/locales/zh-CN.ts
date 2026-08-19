@@ -45,6 +45,9 @@ export default {
   'pwa.install.install': '安装',
   'pwa.install.notNow': '暂不安装',
   'pwa.install.dismiss': '关闭',
+  'pwa.install.androidTitle': '下载 LingUBible 应用程序',
+  'pwa.install.androidDescription': '在 Google Play 获得更快更顺畅的体验',
+  'pwa.install.getOnGooglePlay': '前往 Google Play 下载',
 
   // =============================================================================
   // 2. AUTHENTICATION & USER MANAGEMENT - 認證與用戶管理
