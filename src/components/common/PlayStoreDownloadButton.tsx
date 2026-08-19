@@ -1,20 +1,8 @@
-import { useState } from 'react';
-import { ExternalLink } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
 import { useLanguage } from '@/hooks/useLanguage';
-import { INFO_DIALOG_CONTENT_CLASS } from './dialogStyles';
 
-const GOOGLE_GROUP_URL = 'https://groups.google.com/g/lingubible';
-const TESTING_OPT_IN_URL = 'https://play.google.com/apps/testing/com.lingubible.www.twa';
-const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.lingubible.www.twa';
+export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.lingubible.www.twa';
 
-const GooglePlayIcon = ({ className }: { className?: string }) => (
+export const GooglePlayIcon = ({ className }: { className?: string }) => (
   <svg viewBox="30 336.7 120.9 129.2" className={className} aria-hidden="true">
     <path fill="#FFD400" d="M119.2,421.2c15.3-8.4,27-14.8,28-15.3c3.2-1.7,6.5-6.2,0-9.7c-2.1-1.1-13.4-7.3-28-15.3l-20.1,20.2L119.2,421.2z"/>
     <path fill="#FF3333" d="M99.1,401.1l-64.2,64.7c1.5,0.2,3.2-0.2,5.2-1.3c4.2-2.3,48.8-26.7,79.1-43.3L99.1,401.1z"/>
@@ -23,85 +11,26 @@ const GooglePlayIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+// App 已正式上架，點擊直接前往 Play Store（不再有測試員邀請流程的彈窗）
 export const PlayStoreDownloadButton = ({ className = '' }: { className?: string }) => {
   const { t } = useLanguage();
-  const [open, setOpen] = useState(false);
-
-  const steps: { title: string; desc: string; url?: string }[] = [
-    { title: t('playStore.step1Title'), desc: t('playStore.step1Desc'), url: GOOGLE_GROUP_URL },
-    { title: t('playStore.step2Title'), desc: t('playStore.step2Desc'), url: TESTING_OPT_IN_URL },
-    { title: t('playStore.step3Title'), desc: t('playStore.step3Desc'), url: PLAY_STORE_URL },
-    { title: t('playStore.step4Title'), desc: t('playStore.step4Desc') },
-  ];
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={`relative inline-flex items-center gap-2.5 rounded-lg bg-black text-white border border-gray-600 px-4 py-2 hover:bg-gray-900 hover:scale-105 transition-all duration-200 shadow-md ${className}`}
-        aria-label={`${t('playStore.getItOn')} Google Play (${t('playStore.beta')})`}
-      >
-        <GooglePlayIcon className="h-7 w-7" />
-        <span className="flex flex-col items-start leading-tight text-left">
-          <span className="text-[10px] uppercase tracking-wider opacity-80">{t('playStore.getItOn')}</span>
-          <span className="text-base font-semibold -mt-0.5">Google Play</span>
-        </span>
-        <span className="absolute -top-2 -right-2 rounded-full bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 shadow-md">
-          {t('playStore.beta')}
-        </span>
-      </button>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        {/* 外框樣式與分享彈窗共用，見 dialogStyles.ts */}
-        <DialogContent className={INFO_DIALOG_CONTENT_CLASS}>
-          {/* text-left：DialogHeader 預設在手機置中，但標題是「圖示 + 文字」的
-              flex 列一定靠左，兩者對不齊；統一靠左。pr-8 留給右上角的關閉鍵。 */}
-          <DialogHeader className="pr-8 text-left">
-            <DialogTitle className="flex items-center gap-2 text-lg">
-              <GooglePlayIcon className="h-5 w-5 shrink-0" />
-              {t('playStore.dialogTitle')}
-            </DialogTitle>
-            <DialogDescription className="text-sm">
-              {t('playStore.dialogIntro')}
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* 區塊間距交給 DialogContent 的 grid gap-4，這裡不再另加 margin，
-              上下留白才會跟分享彈窗一致 */}
-          <ol className="min-w-0 space-y-4">
-            {steps.map((step, index) => (
-              <li key={index} className="flex gap-3">
-                <span className="flex-shrink-0 flex items-center justify-center h-6 w-6 rounded-full bg-primary text-primary-foreground text-xs font-bold mt-0.5">
-                  {index + 1}
-                </span>
-                <div className="min-w-0">
-                  <p className="font-medium text-sm">{step.title}</p>
-                  <p className="text-sm text-muted-foreground mt-0.5">{step.desc}</p>
-                  {step.url && (
-                    <a
-                      href={step.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-1 break-all"
-                    >
-                      {step.url.replace('https://', '')}
-                      <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                    </a>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ol>
-
-          <p className="border-t border-gray-200 pt-3 text-xs text-muted-foreground dark:border-zinc-700">
-            {t('playStore.feedback')}{' '}
-            <a href="mailto:support@lingubible.com" className="text-primary hover:underline">
-              support@lingubible.com
-            </a>
-          </p>
-        </DialogContent>
-      </Dialog>
-    </>
+    <a
+      href={PLAY_STORE_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`relative inline-flex items-center gap-2.5 rounded-lg bg-black text-white border border-gray-600 px-4 py-2 hover:bg-gray-900 hover:scale-105 transition-all duration-200 shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${className}`}
+      aria-label={`${t('playStore.getItOn')} Google Play (${t('playStore.new')})`}
+    >
+      <GooglePlayIcon className="h-7 w-7" />
+      <span className="flex flex-col items-start leading-tight text-left">
+        <span className="text-[10px] uppercase tracking-wider opacity-80">{t('playStore.getItOn')}</span>
+        <span className="text-base font-semibold -mt-0.5">Google Play</span>
+      </span>
+      <span className="absolute -top-2 -right-2 rounded-full bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 shadow-md">
+        {t('playStore.new')}
+      </span>
+    </a>
   );
 };
