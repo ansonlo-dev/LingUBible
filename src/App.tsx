@@ -12,7 +12,6 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { CookieConsent } from "@/components/common/CookieConsent";
 import { DocumentHead } from "@/components/common/DocumentHead";
-import { BetaNotice } from "@/components/common/BetaNotice";
 import { PWAInstallPrompt } from "@/components/common/PWAInstallPrompt";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
@@ -130,7 +129,6 @@ const AppContent = () => {
   const { t, isLoading: translationsLoading } = useLanguage();
   
   // 所有 hooks 必須在條件返回之前調用
-  const [showBetaNotice, setShowBetaNotice] = useState(false);
   const [showCookieConsent, setShowCookieConsent] = useState(false);
   const [showSwipeHint, setShowSwipeHint] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -628,9 +626,6 @@ const RouterContent = ({
                     </div>
                   </div>
                 )}
-                
-                {/* 測試版通知橫幅 */}
-                <BetaNotice />
                 
                 {/* 頁面內容 */}
                 <main className="content-area">

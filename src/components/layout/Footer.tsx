@@ -2,7 +2,6 @@ import { useLanguage } from '@/hooks/useLanguage';
 import { Github } from 'lucide-react';
 import { OpenStatusWidget } from '@/components/common/OpenStatusWidget';
 import { FooterDonateButton } from '@/components/common/DonationDialog';
-import { FooterBetaButton } from '@/components/common/BetaNotice';
 import { Link } from 'react-router-dom';
 import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 
@@ -71,7 +70,6 @@ export function Footer() {
             
             {/* Right side - Navigation Links and OpenStatus Badge */}
             <div className="flex items-center space-x-6 text-sm">
-              <FooterBetaButton />
               <FooterDonateButton />
               <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
               <Link to="/faq" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -125,7 +123,6 @@ export function Footer() {
               </div>
               
               <div className="flex items-center space-x-4">
-                <FooterBetaButton />
                 <FooterDonateButton />
                 <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
               </div>
@@ -174,7 +171,6 @@ export function Footer() {
           {/* User Stats and OpenStatus Badge - Mobile */}
           <div className="flex justify-center items-center py-2">
             <div className="flex items-center space-x-2">
-              <FooterBetaButton />
               <FooterDonateButton />
               <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
             </div>
