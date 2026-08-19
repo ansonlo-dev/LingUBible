@@ -2504,10 +2504,11 @@ export default {
 
   'gettingStarted.step.materials.pill': '教材',
   'gettingStarted.step.materials.title': '课程大纲与历届试卷',
-  'gettingStarted.step.materials.tagline': '课程大纲与历届试卷都收在课程页，不用再四处问人。',
+  'gettingStarted.step.materials.tagline': '课程大纲与历届试卷都收在课程页 —— 年份更多、标明讲师、可批量下载，比图书馆的考试资料库好用。',
   'gettingStarted.step.materials.p1': '在课程页直接打开课程大纲，看清评分比重与课程内容。',
-  'gettingStarted.step.materials.p2': '历届试卷与复习资料只开放给已验证的岭南学生（@ln.hk）。',
-  'gettingStarted.step.materials.p3': '可按学年与试卷类型筛选，需要时直接下载。',
+  'gettingStarted.step.materials.p2': '每份试卷都标明该学期的授课讲师，一看就知道出自谁的风格。',
+  'gettingStarted.step.materials.p3': '可以一次勾选多份试卷，打包成一个 zip 下载，不用逐份点。',
+  'gettingStarted.step.materials.p4': '收录超过三年的试卷，比图书馆的考试资料库更齐全；仅限已验证的 @ln.hk 学生查看。',
 
   'gettingStarted.step.planner.pill': '排课',
   'gettingStarted.step.planner.title': '课堂规划器',

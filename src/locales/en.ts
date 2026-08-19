@@ -2498,9 +2498,9 @@ export default {
   // =============================================================================
   // GETTING STARTED - 入門指南
   // =============================================================================
-  'nav.gettingStarted': 'Getting Started',
-  'footer.gettingStarted': 'Getting Started',
-  'gettingStarted.title': 'Getting Started',
+  'nav.gettingStarted': 'Guide',
+  'footer.gettingStarted': 'Guide',
+  'gettingStarted.title': 'Guide',
   'gettingStarted.subtitle': 'A one-minute tour of what LingUBible can do for you.',
   'gettingStarted.meta': '{total} short steps \u00b7 reopen it any time from the sidebar or the footer',
   'gettingStarted.progress': 'Step {current} of {total}',
@@ -2533,10 +2533,11 @@ export default {
 
   'gettingStarted.step.materials.pill': 'Materials',
   'gettingStarted.step.materials.title': 'Syllabi & past exam papers',
-  'gettingStarted.step.materials.tagline': 'Course outlines and past papers live on the course page, so you stop hunting for them.',
+  'gettingStarted.step.materials.tagline': 'Syllabi and past papers live on the course page \u2014 with more years, named instructors and batch download than the library database.',
   'gettingStarted.step.materials.p1': 'Open the syllabus straight from a course page to check the assessment weighting.',
-  'gettingStarted.step.materials.p2': 'Past papers and study materials are reserved for verified Lingnan students (@ln.hk).',
-  'gettingStarted.step.materials.p3': 'Filter by academic year and paper type, then download what you need.',
+  'gettingStarted.step.materials.p2': 'Every paper shows who actually taught that term, so you know whose style it reflects.',
+  'gettingStarted.step.materials.p3': 'Tick several papers and download them all as one zip \u2014 no clicking through them one by one.',
+  'gettingStarted.step.materials.p4': 'We keep more than three years of papers, beyond what the library\u2019s exam database holds. Verified @ln.hk students only.',
 
   'gettingStarted.step.planner.pill': 'Planner',
   'gettingStarted.step.planner.title': 'Lesson Planner',

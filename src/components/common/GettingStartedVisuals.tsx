@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Lock, FileText, Search, Star, Heart, CheckCircle2 } from 'lucide-react';
+import { Lock, FileText, Search, Star, Heart, CheckCircle2, Check, Download, User } from 'lucide-react';
 
 import { useLanguage } from '@/hooks/useLanguage';
 import { cn } from '@/lib/utils';
@@ -162,42 +162,86 @@ export function ReviewsVisual() {
 }
 
 // -----------------------------------------------------------------------------
-// 3. Materials — syllabus + past papers behind a student-only lock
+// 3. Materials — syllabus, per-term instructors, and a batch download
 // -----------------------------------------------------------------------------
 
 export function MaterialsVisual() {
   const on = useAnimateIn();
   const { t } = useLanguage();
-  const files = [
-    { name: t('pages.courseDetail.viewSyllabus'), meta: 'PDF · 2024–25', locked: false },
-    { name: 'Final Exam', meta: 'PDF · 2023–24', locked: true },
-    { name: 'Midterm', meta: 'PDF · 2022–23', locked: true },
+  const HAIR = 'border-gray-200 dark:border-zinc-700';
+  const papers = [
+    { year: '2024\u201325', term: 'Term 1', who: 'Dr. CHAN', checked: true },
+    { year: '2023\u201324', term: 'Term 2', who: 'Prof. LEE', checked: true },
+    { year: '2022\u201323', term: 'Term 1', who: 'Dr. WONG', checked: true },
+    { year: '2020\u201321', term: 'Term 2', who: 'Prof. NG', checked: false },
   ];
+  const picked = papers.filter((p) => p.checked).length;
   return (
     <Frame path="/courses/BUS1102">
-      <div className="space-y-1.5">
-        {files.map((f, i) => (
+      {/* Syllabus sits above the papers, exactly as on the course page */}
+      <div className={cn('flex items-center gap-2 rounded-lg border px-2.5 py-2', HAIR)}>
+        <FileText className="h-4 w-4 shrink-0 text-primary" />
+        <span className="min-w-0 flex-1 truncate text-[11px] font-medium">
+          {t('pages.courseDetail.viewSyllabus')}
+        </span>
+        <span className="shrink-0 font-mono text-[9px] text-muted-foreground">PDF</span>
+      </div>
+
+      <div className="mt-2 space-y-1.5">
+        {papers.map((p, i) => (
           <div
-            key={f.name + f.meta}
+            key={p.year + p.term}
             className={cn(
-              'flex items-center gap-2 rounded-lg border border-gray-200 dark:border-zinc-700 bg-muted/30 px-2.5 py-2 transition-all duration-500 ease-out motion-reduce:transition-none',
+              'flex items-center gap-2 rounded-lg border bg-muted/30 px-2.5 py-1.5 transition-all duration-500 ease-out motion-reduce:transition-none',
+              HAIR,
+              p.checked && 'border-primary/40 bg-primary/5',
               on ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
             )}
-            style={{ transitionDelay: `${100 + i * 100}ms` }}
+            style={{ transitionDelay: `${120 + i * 90}ms` }}
           >
-            <FileText className="h-4 w-4 shrink-0 text-primary" />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[11px] font-medium">{f.name}</span>
-              <span className="block truncate font-mono text-[9px] text-muted-foreground">{f.meta}</span>
+            <span
+              className={cn(
+                'flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[3px] border',
+                p.checked ? 'border-primary bg-primary text-white' : HAIR
+              )}
+            >
+              {p.checked && <Check className="h-2.5 w-2.5 stroke-[3]" />}
             </span>
-            {f.locked && (
-              <span className="flex shrink-0 items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:text-amber-300">
-                <Lock className="h-2.5 w-2.5" />
-                @ln.hk
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-mono text-[10px] font-semibold">
+                {p.year} · {p.term}
               </span>
-            )}
+              {/* The instructor who actually taught that term, per paper */}
+              <span className="mt-0.5 inline-flex max-w-full items-center gap-1 truncate rounded-full bg-muted px-1.5 py-px text-[9px] text-muted-foreground">
+                <User className="h-2.5 w-2.5 shrink-0" />
+                {p.who}
+              </span>
+            </span>
           </div>
         ))}
+      </div>
+
+      {/* Batch download — the whole selection zipped in one go */}
+      <div className={cn('mt-2 flex items-center justify-between gap-2 border-t pt-2', HAIR)}>
+        <span className="flex min-w-0 items-center gap-1.5">
+          <span className="truncate text-[9px] text-muted-foreground">
+            {t('pages.courseDetail.examPapersSelectedCount', { count: picked })}
+          </span>
+          <span className="flex shrink-0 items-center gap-0.5 rounded-full bg-amber-500/15 px-1.5 py-px text-[9px] font-medium text-amber-700 dark:text-amber-300">
+            <Lock className="h-2.5 w-2.5" />
+            @ln.hk
+          </span>
+        </span>
+        <span
+          className={cn(
+            'inline-flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-[9px] font-semibold text-primary-foreground transition-all duration-500 ease-out motion-reduce:transition-none',
+            on ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+          )}
+          style={{ transitionDelay: '420ms' }}
+        >
+          <Download className="h-2.5 w-2.5" />
+          {t('pages.courseDetail.examPapersDownloadSelected', { count: picked })}
+        </span>
       </div>
     </Frame>
   );

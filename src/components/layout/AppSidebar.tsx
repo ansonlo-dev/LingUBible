@@ -248,7 +248,7 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
     {
       items: [
         { name: t('nav.home'), href: '/', icon: HomeIcon, current: location.pathname === '/' },
-        { name: t('nav.gettingStarted'), href: '/getting-started', icon: Compass, current: location.pathname === '/getting-started' }
+        { name: t('nav.gettingStarted'), href: '/guide', icon: Compass, current: location.pathname === '/guide' }
       ]
     },
     // Courses 和 Lecturers 分組

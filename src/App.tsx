@@ -63,6 +63,13 @@ import { sidebarStateCookie } from '@/lib/cookies';
 import { useLanguageFromUrl } from '@/hooks/useLanguageFromUrl';
 import { useResponsive } from '@/hooks/useEnhancedResponsive';
 
+// The guide shipped at /getting-started before the shorter name; keep old links
+// (and the SEO entry that was already crawled) working.
+const LegacyGuideRedirect = () => {
+  const location = useLocation();
+  return <Navigate to={`/guide${location.search}${location.hash}`} replace />;
+};
+
 // The Lesson Planner used to live at /timetable and /lesson-planner. Redirect old
 // links (preserving any shared ?query state) to the current /planner path.
 const LegacyTimetableRedirect = () => {
@@ -678,7 +685,9 @@ const RouterContent = ({
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/faq" element={<FAQ />} />
                     <Route path="/changelog" element={<Changelog />} />
-                    <Route path="/getting-started" element={<GettingStarted />} />
+                    <Route path="/guide" element={<GettingStarted />} />
+                    {/* Legacy path from the guide's first release */}
+                    <Route path="/getting-started" element={<LegacyGuideRedirect />} />
                     {/* 開發模式專用路由 */}
                     <Route 
                       path="/email-preview" 

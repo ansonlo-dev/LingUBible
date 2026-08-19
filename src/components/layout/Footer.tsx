@@ -72,7 +72,7 @@ export function Footer() {
             <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 text-sm">
               <FooterDonateButton />
               <OpenStatusWidget slug="lingubible" href="https://status.lingubible.com/" />
-              <Link to="/getting-started" className="text-muted-foreground hover:text-foreground transition-colors">
+              <Link to="/guide" className="text-muted-foreground hover:text-foreground transition-colors">
                 {t('footer.gettingStarted')}
               </Link>
               <Link to="/changelog" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -155,7 +155,7 @@ export function Footer() {
               </div>
               
               <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-sm">
-                <Link to="/getting-started" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link to="/guide" className="text-muted-foreground hover:text-foreground transition-colors">
                   {t('footer.gettingStarted')}
                 </Link>
                 <Link to="/changelog" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -190,7 +190,7 @@ export function Footer() {
           
           {/* Navigation Links - Mobile */}
           <div className="flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
-            <Link to="/getting-started" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
+            <Link to="/guide" className="text-muted-foreground hover:text-foreground transition-colors font-medium">
               {t('footer.gettingStarted')}
             </Link>
             <Link to="/changelog" className="text-muted-foreground hover:text-foreground transition-colors font-medium">

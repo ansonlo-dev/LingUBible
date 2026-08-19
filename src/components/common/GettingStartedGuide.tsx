@@ -33,7 +33,7 @@ import {
  * The Getting Started tour. One component, two skins:
  *
  * - `variant="dialog"` — what first-time visitors meet, inside a modal.
- * - `variant="page"`   — the permanent copy at /getting-started.
+ * - `variant="page"`   — the permanent copy at /guide.
  *
  * Keeping them the same component means the copy, the steps and the progress
  * behaviour can never drift apart between the two entry points.
@@ -93,7 +93,7 @@ const STEPS: GuideStep[] = [
     pillKey: 'gettingStarted.step.materials.pill',
     visual: MaterialsVisual,
     links: [{ to: '/courses', labelKey: 'nav.courses' }],
-    bullets: 3,
+    bullets: 4,
   },
   {
     id: 'planner',
@@ -151,18 +151,20 @@ function StepProgress({
   const containerRef = useRef<HTMLDivElement>(null);
   const pillRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  // Keep the active pill in view on narrow screens, exactly like the review form.
+  // Keep the active pill in view on narrow screens. Measured from the live
+  // rects rather than `offsetLeft`, which is relative to the nearest positioned
+  // ancestor and so goes wrong the moment the row is wrapped or centred.
   useEffect(() => {
     const container = containerRef.current;
     const pill = pillRefs.current[current];
     if (!container || !pill) return;
     const containerRect = container.getBoundingClientRect();
     const pillRect = pill.getBoundingClientRect();
-    if (pillRect.left < containerRect.left || pillRect.right > containerRect.right) {
-      container.scrollTo({
-        left: Math.max(0, pill.offsetLeft - container.offsetLeft - 20),
-        behavior: 'smooth',
-      });
+    const PAD = 16; // breathing room so the pill never hugs the edge
+    if (pillRect.left < containerRect.left + PAD) {
+      container.scrollBy({ left: pillRect.left - containerRect.left - PAD, behavior: 'smooth' });
+    } else if (pillRect.right > containerRect.right - PAD) {
+      container.scrollBy({ left: pillRect.right - containerRect.right + PAD, behavior: 'smooth' });
     }
   }, [current]);
 
@@ -197,11 +199,12 @@ function StepProgress({
       </div>
 
       {/* Pills — every step is reachable; this is a guide, not a form */}
-      <div
-        ref={containerRef}
-        className="flex justify-start overflow-x-auto scrollbar-hide py-2 md:justify-center"
-      >
-        <div className="flex items-center">
+      <div ref={containerRef} className="flex overflow-x-auto scrollbar-hide py-2">
+        {/* `mx-auto` centres the row when it fits and collapses to 0 when it
+            doesn't. `justify-center` on the scroller would instead push the
+            first pill into negative scroll space, where it can never be
+            reached — which is exactly what it did before. */}
+        <div className="mx-auto flex items-center px-1.5">
           {STEPS.map((step, index) => {
             const Icon = step.icon;
             const isCurrent = index === current;
@@ -218,7 +221,7 @@ function StepProgress({
                   className={cn(
                     'group relative z-10 flex transform items-center justify-center rounded-full border-2 font-bold transition-all duration-300 hover:scale-105 motion-reduce:transform-none motion-reduce:transition-none',
                     'px-2.5 py-1.5 text-[11px] min-w-[64px]',
-                    'md:px-4 md:py-2 md:text-sm md:min-w-[112px]',
+                    'md:px-3 md:py-2 md:text-sm md:min-w-[84px]',
                     {
                       'bg-red-500 border-red-500 text-white shadow-lg ring-4 ring-red-500/20 dark:ring-red-500/30':
                         isCurrent,
@@ -241,7 +244,7 @@ function StepProgress({
                 </button>
 
                 {index < STEPS.length - 1 && (
-                  <div className="relative mx-1.5 h-1 min-w-[12px] flex-1 md:mx-3 md:min-w-[20px]">
+                  <div className="relative mx-1.5 h-1 min-w-[12px] flex-1 md:mx-2 md:min-w-[12px]">
                     <div
                       className={cn(
                         'h-full rounded-full transition-all duration-500 ease-out motion-reduce:transition-none',

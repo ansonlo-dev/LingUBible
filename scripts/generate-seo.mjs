@@ -148,7 +148,7 @@ const STATIC_PAGES = [
     body: '查看學期起訖、加退選期限、考試週與公眾假期等重要日期。',
   },
   {
-    route: '/getting-started',
+    route: '/guide',
     priority: '0.7',
     changefreq: 'monthly',
     title: '入門指南｜LingUBible 新手上手教學',

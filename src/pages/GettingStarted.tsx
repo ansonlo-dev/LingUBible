@@ -37,9 +37,12 @@ export default function GettingStarted() {
 
   return (
     <div className="min-h-screen bg-background">
-      <DocumentHead title={t('gettingStarted.title')} description={t('gettingStarted.subtitle')} />
+      <DocumentHead
+        title={`${t('gettingStarted.title')} \u00b7 LingUBible`}
+        description={t('gettingStarted.subtitle')}
+      />
 
-      <div className="container mx-auto max-w-4xl px-4 py-6 sm:py-8">
+      <div className="container mx-auto max-w-5xl px-4 py-6 sm:py-8">
         <header className="mb-6">
           <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
             <Compass className="h-7 w-7 shrink-0 text-primary" />

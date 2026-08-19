@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 /** Paths that must never be interrupted by the tour. */
 const SUPPRESSED_PREFIXES = [
-  '/getting-started',
+  '/guide',
   '/login',
   '/register',
   '/forgot-password',
@@ -104,7 +104,7 @@ export function GettingStartedPrompt() {
                   {t('gettingStarted.later')}
                 </button>
                 <Link
-                  to="/getting-started"
+                  to="/guide"
                   onClick={dismiss}
                   className="inline-flex items-center gap-1 text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
                 >

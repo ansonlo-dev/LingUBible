@@ -2458,10 +2458,11 @@ export default {
 
   'gettingStarted.step.materials.pill': '教材',
   'gettingStarted.step.materials.title': '課程大綱與歷屆試卷',
-  'gettingStarted.step.materials.tagline': '課程大綱與歷屆試卷都收在課程頁，不用再四處問人。',
+  'gettingStarted.step.materials.tagline': '課程大綱與歷屆試卷都收在課程頁 —— 年份更多、標明講師、可批次下載，比圖書館的考試資料庫好用。',
   'gettingStarted.step.materials.p1': '在課程頁直接開啟課程大綱，看清評分比重與課程內容。',
-  'gettingStarted.step.materials.p2': '歷屆試卷與溫習資料只開放給已驗證的嶺南學生（@ln.hk）。',
-  'gettingStarted.step.materials.p3': '可按學年與試卷類型篩選，需要時直接下載。',
+  'gettingStarted.step.materials.p2': '每份試卷都標明該學期的授課講師，一看就知道出自誰的風格。',
+  'gettingStarted.step.materials.p3': '可以一次勾選多份試卷，打包成一個 zip 下載，不用逐份點。',
+  'gettingStarted.step.materials.p4': '收錄超過三年的試卷，比圖書館的考試資料庫更齊全；僅限已驗證的 @ln.hk 學生查看。',
 
   'gettingStarted.step.planner.pill': '排課',
   'gettingStarted.step.planner.title': '課堂規劃器',
