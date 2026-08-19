@@ -225,9 +225,9 @@ export function Footer() {
           </div>
           
           {/* Disclaimer — trim this line's side padding (and pull into the
-              parent's 10px margin) so it stays on one line down to a 375px-wide
-              iPhone SE portrait. */}
-          <div className="text-center text-xs text-gray-500 dark:text-muted-foreground -mx-2.5 px-0 leading-relaxed">
+              parent's 10px margin) so the longer affiliation notice wraps to at
+              most two balanced lines on a 375px-wide iPhone SE portrait. */}
+          <div className="text-center text-xs text-gray-500 dark:text-muted-foreground -mx-2.5 px-0 leading-relaxed text-balance">
             {t('footer.disclaimer')}
           </div>
           

@@ -31,7 +31,7 @@ export default {
   'tabs.instructors': 'Instructors',
   'tabs.reviews': 'Reviews',
   'footer.builtWith': 'Built with 💝 by ansonlo.dev',
-  'footer.disclaimer': 'The website is not affiliated with Lingnan University',
+  'footer.disclaimer': 'This website is not affiliated with, nor endorsed by, Lingnan University (LU)',
   'footer.builtWithTools': 'Built with open-source tools by',
   'footer.contact': 'Contact',
   'footer.faq': 'FAQ',

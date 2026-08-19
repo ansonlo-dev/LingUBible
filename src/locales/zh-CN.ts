@@ -31,7 +31,7 @@ export default {
   'tabs.instructors': '教师',
   'tabs.reviews': '评论',
   'footer.builtWith': '由 ansonlo.dev 用 💝 制作',
-  'footer.disclaimer': '本网站与岭南大学没有关系',
+  'footer.disclaimer': '本网站与岭南大学（LU）并无任何隶属关系及未获其认可',
   'footer.builtWithTools': '开源工具构建',
   'footer.developedBy': '开发',
   'footer.contact': '联系',

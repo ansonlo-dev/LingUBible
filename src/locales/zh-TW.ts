@@ -29,7 +29,7 @@ export default {
   'tabs.popularCourses': '熱門課程',
   'tabs.topInstructors': '頂級教師',
   'footer.builtWith': '由 ansonlo.dev 用 💝 製作',
-  'footer.disclaimer': '本網站與嶺南大學沒有任何關係',
+  'footer.disclaimer': '本網站與嶺南大學（LU）並無任何隸屬關係及未獲其認可',
   'footer.builtWithTools': '開源工具構建',
   'footer.developedBy': '開發',
   'footer.contact': '聯絡',
