@@ -40,15 +40,17 @@ export function GettingStartedPrompt() {
     let attempts = 0;
     const maxAttempts = 60; // ~30s, then give up for this visit
 
-    // Three things must settle first, or the tour lands on top of them: the
+    // Four things must settle first, or the tour lands on top of them: the
     // translations (an untranslated modal is worse than none), the cookie
-    // banner, and the install prompt. Two overlays at once is the classic
-    // first-visit mess.
+    // banner, the install prompt, and any confirmation the page itself is
+    // asking for (e.g. the planner's "add this shared timetable?" dialog on a
+    // shared link). Two overlays at once is the classic first-visit mess.
     const ready = () => {
       const translated = t('gettingStarted.title') !== 'gettingStarted.title';
       const consentHandled = Boolean(localStorage.getItem('cookieConsent'));
       const installPromptGone = !document.querySelector('[data-install-prompt]');
-      return translated && consentHandled && installPromptGone;
+      const noBlockingDialog = !document.querySelector('[role="alertdialog"]');
+      return translated && consentHandled && installPromptGone && noBlockingDialog;
     };
 
     const wait = () => {

@@ -39,6 +39,10 @@ export interface ShareButtonProps {
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'ghost' | 'outline';
   showText?: boolean;
+  /** 停用按鈕（例如課表還沒選任何班別時）。 */
+  disabled?: boolean;
+  /** 自訂無障礙標籤／提示文字（例如「分享我的課表」）。 */
+  label?: string;
 }
 
 /** 載入 react-share 分塊時的骨架，維持與實際內容相近的高度避免對話框跳動。 */
@@ -77,6 +81,8 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
   size = 'md',
   variant = 'outline',
   showText = false,
+  disabled = false,
+  label,
 }) => {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -111,7 +117,11 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
     <>
       {/* disableMobilePopup：分享是實際動作，手機上一按就要開對話框，
           不能落入 ResponsiveTooltip 預設的「先跳提示、再按一次」流程 */}
-      <ResponsiveTooltip content={t('share.tooltip')} disabled={showText} disableMobilePopup>
+      <ResponsiveTooltip
+        content={label || t('share.tooltip')}
+        disabled={showText}
+        disableMobilePopup
+      >
         <Button
           variant={variant}
           size={showText ? undefined : 'icon'}
@@ -133,7 +143,8 @@ export const ShareButton: React.FC<ShareButtonProps> = ({
           }}
           onPointerEnter={prefetch}
           onFocus={prefetch}
-          aria-label={t('share.tooltip')}
+          disabled={disabled}
+          aria-label={label || t('share.tooltip')}
         >
           <Share2
             className={cn(

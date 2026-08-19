@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useEnhancedResponsive } from '@/hooks/useEnhancedResponsive';
 import { ShareButton } from '@/components/common/ShareButton';
+import { SEO_CONFIG } from '@/utils/seo/config';
+import {
+  buildPlannerShareUrl,
+  parsePlannerShare,
+  plannerShareKey,
+  type PlannerShare,
+} from '@/services/timetableShare';
 import {
   loadTimetableSections,
   findConflicts,
@@ -436,6 +443,15 @@ const Timetable = () => {
     }
   };
 
+  // A shared timetable link (?term=…&sections=…) read once at mount. It decides
+  // which term the page opens on, so a shared link lands on the right term
+  // without a visible switch. The sections themselves are never applied silently
+  // — the user confirms the merge in a dialog (see the import effect below).
+  const [initialShare] = useState<PlannerShare | null>(() =>
+    typeof window === 'undefined' ? null : parsePlannerShare(window.location.search),
+  );
+  const [initialTermId] = useState(() => initialShare?.termId ?? TERMS[TERMS.length - 1].id);
+
   const [allSections, setAllSections] = useState<TimetableSection[]>([]);
   // The term `allSections` currently holds data for. Section ids (CRNs) are
   // reused across terms, so until this matches the selected term the grid must
@@ -447,7 +463,7 @@ const Timetable = () => {
 
   // Term selection (today there is one; the dropdown is future-proofed for more).
   // Default to the newest term and list terms newest-first in the dropdown.
-  const [termId, setTermId] = useState(TERMS[TERMS.length - 1].id);
+  const [termId, setTermId] = useState(initialTermId);
   const term = useMemo(() => TERMS.find((tm) => tm.id === termId) ?? TERMS[TERMS.length - 1], [termId]);
   const isSummer = !!term.summer;
   const termsNewestFirst = useMemo(() => [...TERMS].reverse(), []);
@@ -471,7 +487,7 @@ const Timetable = () => {
     past: string[][];
     present: string[];
     future: string[][];
-  }>(() => ({ past: [], present: loadSelectedIds(TERMS[TERMS.length - 1].id), future: [] }));
+  }>(() => ({ past: [], present: loadSelectedIds(initialTermId), future: [] }));
   const selectedIds = selHistory.present;
   const MAX_HISTORY = 10;
   const sameIds = (a: string[], b: string[]) =>
@@ -590,8 +606,9 @@ const Timetable = () => {
   // rule on mobile and desktop.
   const [panelCollapsed, setPanelCollapsed] = useState<boolean>(() => {
     try {
-      const newestTermId = TERMS[TERMS.length - 1].id;
-      return loadSelectedIds(newestTermId).length > 0;
+      // A shared link opens on its own term, so judge "already has courses"
+      // against that term rather than the newest one.
+      return loadSelectedIds(initialTermId).length > 0;
     } catch {
       return false;
     }
@@ -691,6 +708,35 @@ const Timetable = () => {
     if (nextTermId === termId) return;
     setTermId(nextTermId);
     resetSelection(loadSelectedIds(nextTermId));
+  };
+
+  // ── Shared timetable links ──────────────────────────────────────────────
+  // Opening /planner?term=…&sections=… queues the shared sections here. They are
+  // NEVER applied silently: the user sees what the link contains and confirms,
+  // and confirming *merges* — sections they already picked for that term stay
+  // exactly as they are, and the merge is a single undoable step.
+  const location = useLocation();
+  const [pendingShare, setPendingShare] = useState<PlannerShare | null>(null);
+  const handledShareRef = useRef<string | null>(null);
+  useEffect(() => {
+    const share = parsePlannerShare(location.search);
+    if (!share) return;
+    const key = plannerShareKey(share);
+    // Guard against re-running for the same link (StrictMode double-effects, or
+    // a re-render while the dialog is still open).
+    if (handledShareRef.current === key) return;
+    handledShareRef.current = key;
+    // Arriving from another route in-app: switch to the shared link's term first
+    // (at mount this is already the active term, so it is a no-op).
+    if (share.termId !== termIdRef.current) handleTermChange(share.termId);
+    setPendingShare(share);
+  }, [location.search]);
+
+  // Once resolved (imported or dismissed), drop the share params from the URL so
+  // a refresh or a back-navigation does not prompt again.
+  const clearShareParams = () => {
+    if (!location.search) return;
+    navigate({ pathname: location.pathname, search: '', hash: location.hash }, { replace: true });
   };
 
   // Track the live site theme so default course colours pick the contrasting
@@ -1151,6 +1197,90 @@ const Timetable = () => {
     );
   };
 
+  // ── Shared-link import, resolved against the loaded term data ────────────
+  // Only meaningful once the term's sections are in memory: a shared id that no
+  // longer exists (section withdrawn, wrong term) is reported as skipped rather
+  // than silently dropped.
+  const shareImport = useMemo(() => {
+    if (!pendingShare) return null;
+    if (loading || loadedTermId !== pendingShare.termId) return null;
+    const found = pendingShare.sectionIds
+      .map((id) => sectionById.get(id))
+      .filter(Boolean) as TimetableSection[];
+    const already = found.filter((sec) => selectedSet.has(sec.id));
+    const toAdd = found.filter((sec) => !selectedSet.has(sec.id));
+    return {
+      termName: TERMS.find((tm) => tm.id === pendingShare.termId)?.name ?? pendingShare.termId,
+      found,
+      already,
+      toAdd,
+      // Sections in the link that this term's data no longer contains.
+      missing: pendingShare.sectionIds.length - found.length,
+      // Additions that would land on top of something the viewer already has.
+      // Nothing is removed — the clash is just flagged up front, and shows in
+      // red on the timetable afterwards.
+      clashing: toAdd.filter((sec) => conflictsWithSelection(sec)),
+    };
+  }, [pendingShare, loading, loadedTermId, sectionById, selectedSet, selectedSections, isSummer]);
+
+  const dismissShare = () => {
+    setPendingShare(null);
+    clearShareParams();
+  };
+
+  // A link whose sections have all disappeared from the term is a dead end —
+  // say so once instead of opening an empty dialog.
+  useEffect(() => {
+    if (!shareImport || shareImport.found.length > 0) return;
+    toast({
+      title: t('timetable.share.importEmptyTitle'),
+      description: t('timetable.share.importEmptyDesc', { term: shareImport.termName }),
+      variant: 'destructive',
+    });
+    dismissShare();
+  }, [shareImport]);
+
+  // Merge the shared sections into the viewer's own timetable. Additive only:
+  // existing picks are kept, and the whole merge is one undo step.
+  const applySharedTimetable = () => {
+    if (!shareImport) return;
+    const ids = shareImport.toAdd.map((sec) => sec.id);
+    if (ids.length === 0) {
+      toast({
+        title: t('timetable.share.importAlreadyTitle'),
+        description: t('timetable.share.importAlreadyDesc'),
+      });
+    } else {
+      commitSelection((prev) => [...prev, ...ids.filter((id) => !prev.includes(id))]);
+      // Land the user on their timetable rather than the search panel.
+      setPanelCollapsed(true);
+      const notes = [
+        shareImport.clashing.length > 0
+          ? t('timetable.share.importedClashes', { count: shareImport.clashing.length })
+          : '',
+        shareImport.already.length > 0
+          ? t('timetable.share.importedSkipped', { count: shareImport.already.length })
+          : '',
+        shareImport.missing > 0
+          ? t('timetable.share.importedMissing', { count: shareImport.missing })
+          : '',
+      ].filter(Boolean);
+      toast({
+        title: t('timetable.share.importedTitle', { count: ids.length }),
+        description: notes.join(' ') || t('timetable.share.importedKept'),
+      });
+    }
+    dismissShare();
+  };
+
+  // The link this page's share button hands out: the current term plus whatever
+  // is on the timetable right now. With nothing selected it degrades to the
+  // plain planner URL.
+  const shareUrl = useMemo(
+    () => buildPlannerShareUrl(SEO_CONFIG.BASE_URL, termId, selectedIds),
+    [termId, selectedIds],
+  );
+
   // Results actually shown: optionally drop the clashing (red-bordered) ones.
   const visibleResults = showConflicts
     ? unselectedResults
@@ -1384,7 +1514,7 @@ const Timetable = () => {
     </>
   );
 
-  // Undo / redo / customize / export / clear. Rendered in the action row on
+  // Undo / redo / customize / share / export / clear. Rendered in the action row on
   // mobile, but moved onto the title row on desktop so the filter dropdowns can
   // use the full action row (see the lg: visibility toggles below).
   const actionButtons = (
@@ -1640,6 +1770,23 @@ const Timetable = () => {
         </PopoverContent>
       </Popover>
 
+      {/* Share this timetable as a link. The URL carries the term + the chosen
+          section ids, so whoever opens it can merge them into their own
+          timetable. Disabled until something is actually selected, matching the
+          export/clear buttons next to it. */}
+      <ShareButton
+        url={shareUrl}
+        title={`${displayTitle} · ${t('timetable.title')}`}
+        description={t('timetable.share.cardDesc', {
+          count: selectedSections.length,
+          term: term.name,
+        })}
+        text={t('share.text.timetable', { term: term.name })}
+        hashtags={['LingUBible', 'LingnanU']}
+        label={t('timetable.share.action')}
+        disabled={selectedSections.length === 0}
+      />
+
       {/* Export — the red button now carries its own options (theme,
           resolution, file type); picking a file type runs the export. */}
       <Popover>
@@ -1812,7 +1959,11 @@ const Timetable = () => {
       <div className="mb-6 flex flex-col gap-1 md:flex-row md:flex-wrap md:items-baseline md:gap-5">
         <div className="flex items-center gap-2">
           <h1 className="text-3xl font-bold">{t('timetable.title')}</h1>
+          {/* Page-level share: always the clean planner link (the "share my
+              timetable" action lives in the timetable's action row). Pinned so
+              it never leaks the ?term/?sections of a link the user just opened. */}
           <ShareButton
+            url={`${SEO_CONFIG.BASE_URL}/planner`}
             title={`${t('timetable.title')} · LingUBible`}
             description={t('timetable.subtitle')}
             text={t('share.text.planner')}
@@ -2192,6 +2343,93 @@ const Timetable = () => {
               }}
             >
               {t('timetable.exportAnyway')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Shared-link import. Additive by design: the viewer's own sections for
+          this term are listed as "already added" and are never touched. */}
+      <AlertDialog
+        open={!!shareImport && shareImport.found.length > 0}
+        onOpenChange={(open) => {
+          if (!open) dismissShare();
+        }}
+      >
+        <AlertDialogContent className="max-w-[calc(100vw-1.5rem)] sm:max-w-lg">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('timetable.share.importTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('timetable.share.importDesc', {
+                count: shareImport?.found.length ?? 0,
+                term: shareImport?.termName ?? '',
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          {shareImport && (
+            <div className="space-y-2">
+              <div className="max-h-48 overflow-y-auto rounded-md border timetable-scroll">
+                <ul className="divide-y">
+                  {shareImport.found.map((sec) => {
+                    const owned = selectedSet.has(sec.id);
+                    return (
+                      <li key={sec.id} className="flex items-start gap-2 px-2.5 py-1.5">
+                        <div className="min-w-0 flex-1">
+                          <p className="flex flex-wrap items-baseline gap-x-1.5 text-xs font-semibold">
+                            <span className="font-mono">{sec.courseCode}</span>
+                            {sec.section && (
+                              <span className="text-muted-foreground">{sec.section}</span>
+                            )}
+                            <span className="truncate font-normal text-muted-foreground">
+                              {sec.courseTitle}
+                            </span>
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            {meetingSummary(sec, dayLabels) || t('timetable.noSchedule')}
+                          </p>
+                        </div>
+                        <span
+                          className={`mt-0.5 shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium ${
+                            owned
+                              ? 'bg-muted text-muted-foreground'
+                              : 'bg-primary/10 text-primary'
+                          }`}
+                        >
+                          {owned
+                            ? t('timetable.share.importRowExisting')
+                            : t('timetable.share.importRowNew')}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+              {(shareImport.clashing.length > 0 || shareImport.missing > 0) && (
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  {shareImport.clashing.length > 0 && (
+                    <p className="flex items-start gap-1.5">
+                      <ClockAlert className="mt-px h-3.5 w-3.5 shrink-0 text-red-500" />
+                      {t('timetable.share.importClashNote', { count: shareImport.clashing.length })}
+                    </p>
+                  )}
+                  {shareImport.missing > 0 && (
+                    <p className="flex items-start gap-1.5">
+                      <AlertTriangle className="mt-px h-3.5 w-3.5 shrink-0" />
+                      {t('timetable.share.importMissingNote', { count: shareImport.missing })}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('timetable.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={applySharedTimetable}>
+              {shareImport && shareImport.toAdd.length > 0
+                ? t('timetable.share.importAction', { count: shareImport.toAdd.length })
+                : t('timetable.share.importActionNone')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
