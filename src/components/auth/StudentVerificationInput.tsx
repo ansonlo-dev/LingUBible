@@ -49,7 +49,10 @@ export function StudentVerificationInput({
   const getTranslatedMessage = (result: any) => {
     if (result.messageKey) {
       const params: Record<string, any> = {};
+      // The function attaches whichever counter its message interpolates, so both
+      // must be forwarded or the placeholder renders literally.
       if (result.remainingMinutes) params.remainingMinutes = result.remainingMinutes;
+      if (result.remainingAttempts !== undefined) params.remainingAttempts = result.remainingAttempts;
       return t(result.messageKey, params);
     }
     return result.message;

@@ -7,6 +7,22 @@
 // 簡化的嶺南人驗證服務 - 使用 Appwrite 資料庫存儲，所有邏輯在後端
 import { isValidEmailForRegistration, isStudentEmail, DEV_MODE } from '@/config/devMode';
 
+/**
+ * 後端 send-verification-email 函式的回應。
+ *
+ * `messageKey` 是三個語系檔都必須有的翻譯鍵，呼叫端用
+ * `t(messageKey, { remainingMinutes, remainingAttempts })` 產生本地化訊息；
+ * 沒有 messageKey 時才退回 `message`（函式回傳的英文原文）。
+ * 成功與失敗（400 / 429）兩條路徑都會帶上這些欄位。
+ */
+export interface VerificationResult {
+  success: boolean;
+  message: string;
+  messageKey?: string;
+  remainingMinutes?: number;
+  remainingAttempts?: number;
+}
+
 class StudentVerificationService {
   private readonly ALLOWED_DOMAINS = ['@ln.hk'];
 
@@ -39,7 +55,7 @@ class StudentVerificationService {
   }
 
   // 調用 Appwrite Function
-  private async callFunction(action: 'send' | 'verify', email: string, code?: string, language?: string, theme?: 'light' | 'dark'): Promise<{ success: boolean; message: string }> {
+  private async callFunction(action: 'send' | 'verify', email: string, code?: string, language?: string, theme?: 'light' | 'dark'): Promise<VerificationResult> {
     try {
       console.log(`🚀 開始${action === 'send' ? '發送' : '驗證'}流程:`, { email, action });
       
@@ -118,7 +134,8 @@ class StudentVerificationService {
               success: functionResponse.success,
               message: functionResponse.message || (functionResponse.success ? `${action === 'send' ? '驗證碼已發送' : '驗證成功'}` : `${action === 'send' ? '發送' : '驗證'}失敗`),
               ...(functionResponse.messageKey && { messageKey: functionResponse.messageKey }),
-              ...(functionResponse.remainingMinutes && { remainingMinutes: functionResponse.remainingMinutes })
+              ...(functionResponse.remainingMinutes && { remainingMinutes: functionResponse.remainingMinutes }),
+              ...(functionResponse.remainingAttempts !== undefined && { remainingAttempts: functionResponse.remainingAttempts })
             };
           } catch (parseError) {
             console.error('❌ 解析 Function 回應失敗:', parseError);
@@ -134,12 +151,19 @@ class StudentVerificationService {
             stderr: result.stderr
           });
           
-          // 嘗試解析 responseBody 中的錯誤訊息
+          // 嘗試解析 responseBody 中的錯誤訊息。函式的錯誤回應（400/429…）同樣帶
+          // messageKey，必須一併往上傳，否則呼叫端只能顯示函式回傳的英文原文。
           let errorMessage = '未知錯誤';
+          let errorKeyed: Record<string, any> = {};
           try {
             if (result.responseBody) {
               const errorResponse = JSON.parse(result.responseBody);
               errorMessage = errorResponse.message || result.responseBody;
+              errorKeyed = {
+                ...(errorResponse.messageKey && { messageKey: errorResponse.messageKey }),
+                ...(errorResponse.remainingMinutes && { remainingMinutes: errorResponse.remainingMinutes }),
+                ...(errorResponse.remainingAttempts !== undefined && { remainingAttempts: errorResponse.remainingAttempts })
+              };
             } else {
               errorMessage = result.stderr || '未知錯誤';
             }
@@ -150,7 +174,8 @@ class StudentVerificationService {
           
           return {
             success: false,
-            message: errorMessage
+            message: errorMessage,
+            ...errorKeyed
           };
         }
       } else if (result.status === 'failed') {
@@ -199,7 +224,7 @@ class StudentVerificationService {
   }
 
   // 發送驗證碼郵件（支援多語言和主題）
-  async sendVerificationCode(email: string, language: string = 'zh-TW', theme: 'light' | 'dark' = 'light'): Promise<{ success: boolean; message: string }> {
+  async sendVerificationCode(email: string, language: string = 'zh-TW', theme: 'light' | 'dark' = 'light'): Promise<VerificationResult> {
     try {
       // 開發模式繞過驗證
       if (DEV_MODE.enabled) {
@@ -244,7 +269,7 @@ class StudentVerificationService {
   }
 
   // 驗證驗證碼
-  async verifyCode(email: string, inputCode: string): Promise<{ success: boolean; message: string }> {
+  async verifyCode(email: string, inputCode: string): Promise<VerificationResult> {
     try {
       // 開發模式繞過驗證
       if (DEV_MODE.enabled) {
@@ -284,7 +309,7 @@ class StudentVerificationService {
   }
 
   // 創建已驗證的帳戶（使用後端 API）
-  async createVerifiedAccount(email: string, password: string, name: string, recaptchaToken?: string): Promise<{ success: boolean; message: string }> {
+  async createVerifiedAccount(email: string, password: string, name: string, recaptchaToken?: string): Promise<VerificationResult> {
     try {
       // 基本參數檢查
       if (!email || !password || !name) {
