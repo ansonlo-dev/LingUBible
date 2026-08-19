@@ -129,6 +129,9 @@ export const PWAInstallPrompt: React.FC = () => {
       role="dialog"
       aria-live="polite"
       aria-label={title}
+      /* Marker so the Getting Started tour can wait its turn instead of
+         stacking a modal on top of this banner. */
+      data-install-prompt
       className="fixed inset-x-3 bottom-3 z-[60] sm:inset-x-0 sm:bottom-4 sm:mx-auto sm:w-fit sm:max-w-md"
     >
       {/* 手機：文字一行、按鈕另一行，標題才不會被擠到截斷；sm 以上維持單行排版 */}

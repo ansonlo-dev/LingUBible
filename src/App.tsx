@@ -13,6 +13,7 @@ import { Footer } from "@/components/layout/Footer";
 import { CookieConsent } from "@/components/common/CookieConsent";
 import { DocumentHead } from "@/components/common/DocumentHead";
 import { PWAInstallPrompt } from "@/components/common/PWAInstallPrompt";
+import { GettingStartedPrompt } from "@/components/common/GettingStartedPrompt";
 import { BackToTop } from "@/components/ui/back-to-top";
 import { ScrollToTop } from "@/components/common/ScrollToTop";
 import SmartFontLoader from "@/components/common/SmartFontLoader";
@@ -47,6 +48,7 @@ import Privacy from "./pages/legal/Privacy";
 import Contact from "./pages/legal/Contact";
 import FAQ from "./pages/legal/FAQ";
 import Changelog from "./pages/Changelog";
+import GettingStarted from "./pages/GettingStarted";
 import EmailPreview from "./pages/EmailPreview";
 import PerformanceTest from "./pages/PerformanceTest";
 
@@ -676,6 +678,7 @@ const RouterContent = ({
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/faq" element={<FAQ />} />
                     <Route path="/changelog" element={<Changelog />} />
+                    <Route path="/getting-started" element={<GettingStarted />} />
                     {/* 開發模式專用路由 */}
                     <Route 
                       path="/email-preview" 
@@ -707,6 +710,7 @@ const RouterContent = ({
           }
         />
       </Routes>
+      <GettingStartedPrompt />
       </LoginRequiredProvider>
     </>
   );

@@ -148,6 +148,16 @@ const STATIC_PAGES = [
     body: '查看學期起訖、加退選期限、考試週與公眾假期等重要日期。',
   },
   {
+    route: '/getting-started',
+    priority: '0.7',
+    changefreq: 'monthly',
+    title: '入門指南｜LingUBible 新手上手教學',
+    description:
+      'LingUBible 入門指南：一分鐘認識課程與講師評價、課程大綱與歷屆試卷、課堂時間表規劃、GPA 計算機與學年行事曆。',
+    h1: 'LingUBible 入門指南',
+    body: '第一次使用 LingUBible？這份分步指南介紹課程與講師評價、課程大綱與歷屆試卷、課堂時間表規劃器、GPA 與榮譽等級計算機，以及學年行事曆。',
+  },
+  {
     route: '/faq',
     priority: '0.6',
     changefreq: 'monthly',

@@ -1,4 +1,4 @@
-import { BookOpen, GraduationCap, Star, Settings, Languages, LogOut, Menu, MessageSquareText, MessagesSquare, Heart, HeartHandshake, UserCircle, Mail, BookText, Calculator, BookCheck, CalendarRange } from 'lucide-react';
+import { BookOpen, GraduationCap, Star, Settings, Languages, LogOut, Menu, MessageSquareText, MessagesSquare, Heart, HeartHandshake, UserCircle, Mail, BookText, Calculator, BookCheck, CalendarRange, Compass } from 'lucide-react';
 import { useLanguage } from '@/hooks/useLanguage';
 import { useAuth } from '@/contexts/AuthContext';
 import { APP_CONFIG } from '@/utils/constants/config';
@@ -247,7 +247,8 @@ export function AppSidebar({ isCollapsed, onToggle, isMobileOpen, onMobileToggle
     // Home - 不需要分組名稱
     {
       items: [
-        { name: t('nav.home'), href: '/', icon: HomeIcon, current: location.pathname === '/' }
+        { name: t('nav.home'), href: '/', icon: HomeIcon, current: location.pathname === '/' },
+        { name: t('nav.gettingStarted'), href: '/getting-started', icon: Compass, current: location.pathname === '/getting-started' }
       ]
     },
     // Courses 和 Lecturers 分組

@@ -76,3 +76,23 @@ export const sidebarStateCookie = {
     cookies.remove(SIDEBAR_STATE_COOKIE);
   }
 }; 
+// 入門指南相關的 cookie 常量
+export const GETTING_STARTED_COOKIE = 'LingUBible-getting-started-seen';
+
+// 入門指南 cookie 操作
+export const gettingStartedCookie = {
+  // 標記用戶已看過（或主動關閉）入門指南
+  markAsSeen: () => {
+    cookies.set(GETTING_STARTED_COOKIE, 'true', 365); // 保存一年
+  },
+
+  // 檢查用戶是否已看過入門指南
+  hasBeenSeen: (): boolean => {
+    return cookies.get(GETTING_STARTED_COOKIE) === 'true';
+  },
+
+  // 重置入門指南（用於測試或「重新觀看」功能）
+  reset: () => {
+    cookies.remove(GETTING_STARTED_COOKIE);
+  }
+};
