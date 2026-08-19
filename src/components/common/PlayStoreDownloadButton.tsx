@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLanguage } from '@/hooks/useLanguage';
 
 export const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.lingubible.www.twa';
@@ -11,9 +12,30 @@ export const GooglePlayIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+/**
+ * iOS / iPadOS / macOS 用戶裝不了 Play Store 的 App，對他們來說這個按鈕沒有用，
+ * 所以直接隱藏。iPadOS 13+ 的 navigator.platform 會報 "MacIntel"，一樣會被判為 Apple。
+ */
+export const isApplePlatform = (): boolean => {
+  if (typeof navigator === 'undefined') return false;
+
+  // navigator.platform 已被棄用，Chromium 上優先用 userAgentData（macOS 會回報 "macOS"）
+  const uaPlatform = (navigator as any).userAgentData?.platform;
+  if (typeof uaPlatform === 'string' && uaPlatform) {
+    return /mac|ios|iphone|ipad/i.test(uaPlatform);
+  }
+
+  const legacy = navigator.platform || navigator.userAgent || '';
+  return /mac|iphone|ipad|ipod/i.test(legacy);
+};
+
 // App 已正式上架，點擊直接前往 Play Store（不再有測試員邀請流程的彈窗）
 export const PlayStoreDownloadButton = ({ className = '' }: { className?: string }) => {
   const { t } = useLanguage();
+  // 只判斷一次：使用者的 OS 不會在同一個 session 中改變
+  const [hidden] = useState(isApplePlatform);
+
+  if (hidden) return null;
 
   return (
     <a
