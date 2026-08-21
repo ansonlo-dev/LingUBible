@@ -40,7 +40,8 @@ import {
   Clock,
   Tags,
   Languages,
-  Presentation
+  Presentation,
+  Library
 } from 'lucide-react';
 import { storage } from '@/lib/appwrite';
 import { Query } from 'appwrite';
@@ -63,6 +64,8 @@ import GradeDistributionChart from '@/components/features/reviews/GradeDistribut
 import { calculateGradeDistributionFromReviews } from '@/utils/gradeUtils';
 import { ResponsiveTooltip } from '@/components/ui/responsive-tooltip';
 import { PdfViewerDialog } from '@/components/pdf/PdfViewerDialog';
+import { CourseReadings } from '@/components/features/courses/CourseReadings';
+import { parseCourseReadings } from '@/utils/readingsUtils';
 import { cn } from '@/lib/utils';
 
 // Faculty mapping function - copied from Lecturers.tsx
@@ -553,7 +556,7 @@ const CourseRequirementsSection: React.FC<CourseRequirementsSectionProps> = ({ c
 };
 
 // 主分頁的有效值 — 與 /courses/:courseCode/:tab 路由的 tab 參數對應
-const COURSE_MAIN_TABS = ['overview', 'teaching', 'reviews', 'grades', 'materials', 'exams'];
+const COURSE_MAIN_TABS = ['overview', 'teaching', 'reviews', 'grades', 'readings', 'materials', 'exams'];
 
 const CourseDetail = () => {
   const { courseCode, tab } = useParams<{ courseCode: string; tab?: string }>();
@@ -754,6 +757,13 @@ const CourseDetail = () => {
     currentTermCode
   );
 
+  // 📚 參考書目（courses.readings 的 JSON 字串），解析失敗或無資料時為空陣列，
+  // 分頁按鈕與內容都會隱藏 —— 全部由課程主檔一起帶回，不會多打任何 Appwrite 請求。
+  const courseReadings = React.useMemo(
+    () => parseCourseReadings(data.course?.readings),
+    [data.course?.readings]
+  );
+
   // 篩選狀態
   const [selectedGradeChartFilter, setSelectedGradeChartFilter] = useState<string | string[]>('all');
   const [activeTeachingTab, setActiveTeachingTab] = useState<string>('lecture');
@@ -780,6 +790,16 @@ const CourseDetail = () => {
     setActiveMainTab(prev => (prev === target ? prev : target));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
+
+  // 直接開啟 /courses/XXX/readings 但這門課沒有書目時，資料載入完成後退回概覽，
+  // 免得停在一個沒有按鈕、也沒有內容的空分頁
+  useEffect(() => {
+    if (loading) return;
+    if (activeMainTab === 'readings' && courseReadings.length === 0) {
+      handleMainTabChange('overview');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, activeMainTab, courseReadings.length]);
   // Whether the tab row overflows horizontally (tabs wider than the screen).
   // When it does, the content's top-right corner is covered by a tab, so we
   // drop the top-right border radius; otherwise we round it.
@@ -853,7 +873,7 @@ const CourseDetail = () => {
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [language, user, studyMaterials.length, examPapers.length]);
+  }, [language, user, studyMaterials.length, examPapers.length, courseReadings.length]);
   // Latest course syllabus PDF (bucket: course_syllabus). Filenames are prefixed
   // with the course code and suffixed with a term number, e.g. CDS2004-202601.pdf;
   // we surface the largest suffix (most recent version). Open to all visitors.
@@ -2430,6 +2450,18 @@ const CourseDetail = () => {
               <span className="hidden sm:inline">{t('chart.gradeDistribution')}</span>
               {activeMainTab === 'grades' && <span className="sm:hidden text-xs">{t('common.grades')}</span>}
             </TabsTrigger>
+            {/* 參考書目分頁：只有 courses.readings 有資料時才出現（訪客同樣看得到，
+                書目來自課程大綱，並非受限資源） */}
+            {courseReadings.length > 0 && (
+              <TabsTrigger
+                value="readings"
+                className="attached-tab-trigger"
+              >
+                <Library className="h-4 w-4" />
+                <span className="hidden sm:inline">{t('pages.courseDetail.readings')}</span>
+                {activeMainTab === 'readings' && <span className="sm:hidden text-xs">{t('pages.courseDetail.readingsShort')}</span>}
+              </TabsTrigger>
+            )}
             {/* Hide the study-materials tab for logged-in users when none exist.
                 Guests still see it (they get a login prompt) since we can't
                 check the bucket without auth. */}
@@ -3806,6 +3838,13 @@ const CourseDetail = () => {
                 </div>
               </div>
             )}
+          </div>
+        </TabsContent>
+
+        {/* Readings Tab */}
+        <TabsContent value="readings" className="attached-tab-content mt-0">
+          <div className="p-4 sm:p-6">
+            <CourseReadings readings={courseReadings} />
           </div>
         </TabsContent>
 
