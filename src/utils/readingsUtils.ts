@@ -7,10 +7,11 @@
  * - `FULL_NAME` — 完整書目描述（作者、書名、版次、出版社…）
  * - `SOURCE` — 若是網上資源就是網址，否則是可用來搜尋該書的關鍵字串
  *
- * 分類規則（依照 SOURCE）：
- * - 不是網址 → 書籍（Books）
- * - 是 doi.org 網址 → 論文及期刊（Articles / Thesis）
- * - 其餘網址 → 網頁（Websites）
+ * 分類規則：
+ * - SOURCE 是 doi.org 網址，或 FULL_NAME 內含 doi.org → 論文及期刊（Articles / Thesis）
+ *   （不少書目把 DOI 寫在描述句末，SOURCE 卻只放書名關鍵字）
+ * - 否則 SOURCE 不是網址 → 書籍（Books）
+ * - 否則 → 網頁（Websites）
  */
 
 /** 閱讀資料的分組：必讀 / 選讀 */
@@ -36,27 +37,53 @@ export interface CourseReading {
 const URL_WITH_SCHEME = /^https?:\/\//i;
 /** 沒有 scheme 但明顯是網址，例如 www.hkicpa.org.hk/... */
 const BARE_WWW_URL = /^www\.[^\s]+\.[^\s]/i;
-/** doi.org（含 dx.doi.org / www.doi.org），取出後面的 DOI */
-const DOI_URL = /^https?:\/\/(?:www\.|dx\.)?doi\.org\/(.+)$/i;
+/** 文字中的 doi.org 連結（含 dx.doi.org / www.doi.org，scheme 可省略），取出後面的 DOI */
+const DOI_IN_TEXT = /(?:https?:\/\/)?(?:www\.|dx\.)?doi\.org\/(\S+)/i;
 /** 嶺南圖書館的 DOI 代理網址，例如 https://doi-org.lingnan.idm.oclc.org/10.1080/... */
-const DOI_PROXY_URL = /^https?:\/\/doi-org(?:[.-][a-z0-9-]+)*\.oclc\.org\/(.+)$/i;
+const DOI_PROXY_IN_TEXT = /https?:\/\/doi-org(?:[.-][a-z0-9-]+)*\.oclc\.org\/(\S+)/i;
+
+/** 書目描述常把 DOI 放在句末，需要剝掉不屬於 DOI 的結尾標點與包裹符號 */
+const CLOSING_PAIRS: Record<string, string> = { ')': '(', ']': '[', '}': '{' };
+const trimBibliographyPunctuation = (value: string): string => {
+  let doi = value.trim();
+  while (doi) {
+    const last = doi.slice(-1);
+    // 成對括號可能是 DOI 的一部分（例如 10.1016/S0140-6736(06)69479-8），
+    // 只有在沒有對應開括號時才視為書目的包裹符號
+    const opener = CLOSING_PAIRS[last];
+    if (opener) {
+      const opens = doi.split(opener).length - 1;
+      const closes = doi.split(last).length - 1;
+      if (closes <= opens) break;
+    } else if (!'.,;:>"\u2019\u201d'.includes(last)) {
+      break;
+    }
+    doi = doi.slice(0, -1);
+  }
+  return doi;
+};
+
+/** 從網址或書目描述中擷取 DOI（例如 10.1007/s11301-020-00181-x） */
+const extractDoi = (text?: string): string | undefined => {
+  if (!text) return undefined;
+  const match = text.match(DOI_IN_TEXT) || text.match(DOI_PROXY_IN_TEXT);
+  if (!match) return undefined;
+  return trimBibliographyPunctuation(match[1]) || undefined;
+};
 
 /** Anna's Archive 域名 — 中文介面走 tw. 子網域 */
 const ANNAS_ARCHIVE_DOMAIN = 'annas-archive.pk';
 
-const classifySource = (source: string): Pick<CourseReading, 'kind' | 'url' | 'doi'> => {
-  if (!source) return { kind: 'book' };
-
+const classifyReading = (source: string, fullName: string): Pick<CourseReading, 'kind' | 'url' | 'doi'> => {
   const hasScheme = URL_WITH_SCHEME.test(source);
-  if (!hasScheme && !BARE_WWW_URL.test(source)) return { kind: 'book' };
+  const isUrl = hasScheme || BARE_WWW_URL.test(source);
+  const url = isUrl ? (hasScheme ? source : `https://${source}`) : undefined;
 
-  const url = hasScheme ? source : `https://${source}`;
-  const doiMatch = url.match(DOI_URL) || url.match(DOI_PROXY_URL);
-  if (doiMatch) {
-    const doi = doiMatch[1].trim().replace(/\/+$/, '');
-    if (doi) return { kind: 'article', url, doi };
-  }
-  return { kind: 'website', url };
+  // 論文及期刊：SOURCE 是 doi.org 網址，或書目描述裡帶有 doi.org 連結
+  const doi = extractDoi(url) || extractDoi(fullName);
+  if (doi) return { kind: 'article', doi, url: url ?? `https://doi.org/${doi}` };
+
+  return isUrl ? { kind: 'website', url } : { kind: 'book' };
 };
 
 /**
@@ -93,7 +120,7 @@ export const parseCourseReadings = (raw?: string | null): CourseReading[] => {
       group,
       fullName: fullName || source,
       source,
-      ...classifySource(source),
+      ...classifyReading(source, fullName),
     });
   }
   return readings;
@@ -104,6 +131,16 @@ export const getAnnasArchiveDomain = (language: string): string =>
   language === 'zh-TW' || language === 'zh-CN'
     ? `tw.${ANNAS_ARCHIVE_DOMAIN}`
     : ANNAS_ARCHIVE_DOMAIN;
+
+/** Anna's Archive 的維基百科條目 — 跟隨站台語言（繁 / 簡中走 zh 維基的字詞轉換路徑） */
+const ANNAS_ARCHIVE_WIKIPEDIA: Record<string, string> = {
+  'zh-TW': 'https://zh.wikipedia.org/zh-tw/安娜的檔案',
+  'zh-CN': 'https://zh.wikipedia.org/zh-cn/安娜的檔案',
+  en: "https://en.wikipedia.org/wiki/Anna's_Archive",
+};
+
+export const getAnnasArchiveWikipediaUrl = (language: string): string =>
+  ANNAS_ARCHIVE_WIKIPEDIA[language] || ANNAS_ARCHIVE_WIKIPEDIA.en;
 
 /**
  * 取得該筆閱讀資料的外部連結：
