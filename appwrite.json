@@ -1052,6 +1052,15 @@
                     "encrypt": false
                 },
                 {
+                    "key": "readings",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 65536,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
                     "key": "current_term_offered",
                     "type": "boolean",
                     "required": false,
