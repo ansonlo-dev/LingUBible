@@ -467,7 +467,7 @@ export default {
   'pages.courseDetail.readingsRequired': '必读',
   'pages.courseDetail.readingsSupplementary': '选读',
   'pages.courseDetail.readingsCount': '{count} 项',
-  'pages.courseDetail.readingsHint': '书目资料取自课程大纲。书籍与论文会打开 {archive} 搜索结果，网页则直接打开原网址。',
+  'pages.courseDetail.readingsHint': '书目资料取自课程大纲。书籍与论文会打开 {archive} 搜索结果，网页则直接打开原网址。搜索结果未必存在，也未必完全对应该笔书目，请自行核对。',
   'pages.courseDetail.readingsArchiveLearnMore': '在维基百科了解更多',
   'pages.courseDetail.readingKindBook': '书籍',
   'pages.courseDetail.readingKindArticle': '论文及期刊',

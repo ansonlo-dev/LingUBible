@@ -470,7 +470,7 @@ export default {
   'pages.courseDetail.readingsRequired': 'Required / Essential',
   'pages.courseDetail.readingsSupplementary': 'Recommended / Supplementary',
   'pages.courseDetail.readingsCount': '{count} items',
-  'pages.courseDetail.readingsHint': 'Reading lists are taken from the course syllabus. Books and articles open a search on {archive}; websites open the original page.',
+  'pages.courseDetail.readingsHint': 'Reading lists are taken from the course syllabus. Books and articles open a search on {archive}; websites open the original page. Search results are not guaranteed to exist or to match the exact item listed, so please verify them yourself.',
   'pages.courseDetail.readingsArchiveLearnMore': 'Learn more on Wikipedia',
   'pages.courseDetail.readingKindBook': 'Books',
   'pages.courseDetail.readingKindArticle': 'Articles / Thesis',

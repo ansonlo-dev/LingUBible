@@ -467,7 +467,7 @@ export default {
   'pages.courseDetail.readingsRequired': '必讀',
   'pages.courseDetail.readingsSupplementary': '選讀',
   'pages.courseDetail.readingsCount': '{count} 項',
-  'pages.courseDetail.readingsHint': '書目資料取自課程大綱。書籍與論文會開啟 {archive} 搜尋結果，網頁則直接開啟原網址。',
+  'pages.courseDetail.readingsHint': '書目資料取自課程大綱。書籍與論文會開啟 {archive} 搜尋結果，網頁則直接開啟原網址。搜尋結果未必存在，也未必完全對應該筆書目，請自行核對。',
   'pages.courseDetail.readingsArchiveLearnMore': '在維基百科了解更多',
   'pages.courseDetail.readingKindBook': '書籍',
   'pages.courseDetail.readingKindArticle': '論文及期刊',

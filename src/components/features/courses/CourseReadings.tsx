@@ -203,7 +203,7 @@ const ArchiveMention: React.FC = () => {
             href={getAnnasArchiveWikipediaUrl(language)}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 font-medium text-primary hover:underline"
+            className="inline-flex items-center gap-1.5 font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:underline"
           >
             {learnMore}
             <ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
